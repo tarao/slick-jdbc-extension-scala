@@ -35,7 +35,8 @@ case class SQLComment(comment: Any) {
 }
 
 object Translator extends Context {
-  val defaultTranslators = Seq(MarginStripper, CallerCommenter)
+  implicit val default: Traversable[Translator] =
+    Seq(MarginStripper, CallerCommenter)
   def translate(query: String)(implicit
     translators: Traversable[Translator]
   ) = translators.foldLeft(query) { (q, translate) => translate(q, this) }
@@ -43,6 +44,6 @@ object Translator extends Context {
     translators: Traversable[Translator]
   ): SQLActionBuilder = {
     val query = builder.queryParts.iterator.map(String.valueOf).mkString
-    SQLActionBuilder(Seq(translate(query)), builder.unitPConv)
+    SQLActionBuilder(Seq(translate(query)(translators)), builder.unitPConv)
   }
 }

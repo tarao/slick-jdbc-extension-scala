@@ -38,6 +38,8 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     tq"""$interpolation.${TypeName("CheckOptionNonEmptyParameter")}"""
   private def checkParameter(required: Type, base: Tree = CheckParameter) =
     q"implicitly[$base[$required]]"
+  private val Translators =
+    tq"Traversable[$NS.query.Translator]"
 
   def invokeInterpolation(param: c.Expr[Any]*): Tree = {
     val stats = new ListBuffer[Tree]
@@ -128,7 +130,7 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
         new slick.jdbc.ActionBasedSQLInterpolation(
           StringContext(..$queryParts)
         ).sql(..$params)
-      )($NS.query.Translator.defaultTranslators)
+      )(implicitly[$Translators])
     """)
     q"{ ..$stats }"
   }
