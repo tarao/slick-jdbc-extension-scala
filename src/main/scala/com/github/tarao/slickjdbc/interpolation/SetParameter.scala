@@ -8,13 +8,13 @@ import util.NonEmpty
 
 trait ListParameter {
   @inline implicit
-  def createSetList[T](implicit c: SP[T]): SetListParameter[T, NonEmpty[T]] =
-    new SetListParameter[T, NonEmpty[T]](c)
+  def createSetList[T](implicit c: SP[T]): SetList[T, NonEmpty[T]] =
+    new SetList[T, NonEmpty[T]](c)
 }
 object ListParameter extends ListParameter
 
 /** SetParameter for non-empty list types. */
-class SetListParameter[S, -T <: NonEmpty[S]](val c: SP[S]) extends SP[T] {
+class SetList[S, -T <: NonEmpty[S]](val c: SP[S]) extends SP[T] {
   def apply(param: T, pp: PositionedParameters): Unit = {
     param.foreach { item => c.asInstanceOf[SP[Any]](item, pp) }
   }
@@ -31,24 +31,24 @@ object CheckParameter {
 @implicitNotFound(msg = "Illegal parameter type: ${T}.\n" +
   "[NOTE] A list is not allowed since it may be empty and breaks the query.\n" +
   "[NOTE] Pass a util.NonEmpty[] if you know that it is not empty.")
-sealed trait CheckListParameter[-T]
-object CheckListParameter {
-  implicit def valid[T](implicit c: SP[T]): CheckListParameter[T] =
-    new CheckListParameter[T] {}
+sealed trait CheckList[-T]
+object CheckList {
+  implicit def valid[T](implicit c: SP[T]): CheckList[T] =
+    new CheckList[T] {}
 }
 
 @implicitNotFound(msg = "Non-empty list is passed.\n" +
   "[NOTE] Use interpolation.ListParameter trait to enable passing a non-empty list.")
-sealed trait CheckNonEmptyParameter[-T]
-object CheckNonEmptyParameter {
-  implicit def valid[T](implicit c: SP[T]): CheckNonEmptyParameter[T] =
-    new CheckNonEmptyParameter[T] {}
+sealed trait CheckNonEmpty[-T]
+object CheckNonEmpty {
+  implicit def valid[T](implicit c: SP[T]): CheckNonEmpty[T] =
+    new CheckNonEmpty[T] {}
 }
 
 @implicitNotFound(msg = "Maybe-non-empty list is passed.\n" +
   "[NOTE] Break it into Some(_) or None to confirm that it is not empty.")
-sealed trait CheckOptionNonEmptyParameter[-T]
-object CheckOptionNonEmptyParameter {
-  implicit def valid[T](implicit c: SP[T]): CheckOptionNonEmptyParameter[T] =
-    new CheckOptionNonEmptyParameter[T] {}
+sealed trait CheckOptionNonEmpty[-T]
+object CheckOptionNonEmpty {
+  implicit def valid[T](implicit c: SP[T]): CheckOptionNonEmpty[T] =
+    new CheckOptionNonEmpty[T] {}
 }

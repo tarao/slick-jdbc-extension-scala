@@ -31,11 +31,11 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
   private lazy val CheckParameter =
     tq"""$interpolation.${TypeName("CheckParameter")}"""
   private lazy val CheckList =
-    tq"""$interpolation.${TypeName("CheckListParameter")}"""
+    tq"""$interpolation.${TypeName("CheckList")}"""
   private lazy val CheckNonEmpty =
-    tq"""$interpolation.${TypeName("CheckNonEmptyParameter")}"""
+    tq"""$interpolation.${TypeName("CheckNonEmpty")}"""
   private lazy val CheckOptionNonEmpty =
-    tq"""$interpolation.${TypeName("CheckOptionNonEmptyParameter")}"""
+    tq"""$interpolation.${TypeName("CheckOptionNonEmpty")}"""
   private def checkParameter(required: Type, base: Tree = CheckParameter) =
     q"implicitly[$base[$required]]"
   private val Translators =
