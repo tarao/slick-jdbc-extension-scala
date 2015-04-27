@@ -109,7 +109,9 @@ object TypeBinder {
   def javaNumber[T](valueOf: String => T): TypeBinder[Option[T]] =
     any.map {
       case v if v == null => None
-      case v => Some(valueOf(v.toString))
+      case v => try {
+        Some(valueOf(v.toString))
+      } catch { case e: NumberFormatException => None }
     }
   def javaFixedNumber[T](
     to: Number => T,
@@ -117,7 +119,9 @@ object TypeBinder {
   ): TypeBinder[Option[T]] = any.map {
     case v if v == null => None
     case v: Number => Some(to(v))
-    case v => Some(valueOf(v.toString))
+    case v => try {
+      Some(valueOf(v.toString))
+    } catch { case e: NumberFormatException => None }
   }
 
   implicit val javaByte: TypeBinder[Option[java.lang.Byte]] =
