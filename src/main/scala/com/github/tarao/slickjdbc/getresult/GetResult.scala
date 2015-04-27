@@ -61,7 +61,7 @@ trait TypeBinder[+T] {
   }
 }
 
-object TypeBinder extends AutoUnwrapOption {
+object TypeBinder {
   type Get[X, R] = (ResultSet, X) => R
   def apply[T](byIndex: Get[Int, T])(byField: Get[String, T]): TypeBinder[T] =
     new TypeBinder[T] {
@@ -172,6 +172,7 @@ trait AutoUnwrapOption {
     option: TypeBinder[Option[T]]
   ): TypeBinder[T] = option.map(_.get) // throws
 }
+object AutoUnwrapOption extends AutoUnwrapOption
 
 sealed trait NoOption[+T]
 object NoOption {
