@@ -72,26 +72,26 @@ object TypeBinder {
   val any: TypeBinder[Any] =
     TypeBinder[Any](_ getObject _)(_ getObject _)
 
-  implicit val blob: TypeBinder[java.sql.Blob] =
-    TypeBinder(_ getBlob _)(_ getBlob _)
-  implicit val clob: TypeBinder[java.sql.Clob] =
-    TypeBinder(_ getClob _)(_ getClob _)
-  implicit val nClob: TypeBinder[java.sql.NClob] =
-    TypeBinder(_ getNClob _)(_ getNClob _)
-  implicit val array: TypeBinder[java.sql.Array] =
-    TypeBinder(_ getArray _)(_ getArray _)
-  implicit val date: TypeBinder[java.sql.Date] =
-    TypeBinder(_ getDate _)(_ getDate _)
-  implicit val time: TypeBinder[java.sql.Time] =
-    TypeBinder(_ getTime _)(_ getTime _)
-  implicit val timestamp: TypeBinder[java.sql.Timestamp] =
-    TypeBinder(_ getTimestamp _)(_ getTimestamp _)
-  implicit val sqlxml: TypeBinder[java.sql.SQLXML] =
-    TypeBinder(_ getSQLXML _)(_ getSQLXML _)
-  implicit val ref: TypeBinder[java.sql.Ref] =
-    TypeBinder(_ getRef _)(_ getRef _)
-  implicit val rowId: TypeBinder[java.sql.RowId] =
-    TypeBinder(_ getRowId _)(_ getRowId _)
+  implicit val blob: TypeBinder[Option[java.sql.Blob]] =
+    TypeBinder(_ getBlob _)(_ getBlob _).map(Option(_))
+  implicit val clob: TypeBinder[Option[java.sql.Clob]] =
+    TypeBinder(_ getClob _)(_ getClob _).map(Option(_))
+  implicit val nClob: TypeBinder[Option[java.sql.NClob]] =
+    TypeBinder(_ getNClob _)(_ getNClob _).map(Option(_))
+  implicit val array: TypeBinder[Option[java.sql.Array]] =
+    TypeBinder(_ getArray _)(_ getArray _).map(Option(_))
+  implicit val date: TypeBinder[Option[java.sql.Date]] =
+    TypeBinder(_ getDate _)(_ getDate _).map(Option(_))
+  implicit val time: TypeBinder[Option[java.sql.Time]] =
+    TypeBinder(_ getTime _)(_ getTime _).map(Option(_))
+  implicit val timestamp: TypeBinder[Option[java.sql.Timestamp]] =
+    TypeBinder(_ getTimestamp _)(_ getTimestamp _).map(Option(_))
+  implicit val sqlxml: TypeBinder[Option[java.sql.SQLXML]] =
+    TypeBinder(_ getSQLXML _)(_ getSQLXML _).map(Option(_))
+  implicit val ref: TypeBinder[Option[java.sql.Ref]] =
+    TypeBinder(_ getRef _)(_ getRef _).map(Option(_))
+  implicit val rowId: TypeBinder[Option[java.sql.RowId]] =
+    TypeBinder(_ getRowId _)(_ getRowId _).map(Option(_))
 
   implicit val javaBoolean: TypeBinder[Option[java.lang.Boolean]] = any.map {
     case b if b == null => None
@@ -154,17 +154,17 @@ object TypeBinder {
   implicit val scalaBigDecimal: TypeBinder[Option[BigDecimal]] =
     javaBigDecimal.map(_.map(BigDecimal(_)))
 
-  implicit val string: TypeBinder[String] =
-    TypeBinder(_ getString _)(_ getString _)
-  implicit val bytes: TypeBinder[Array[Byte]] =
-    TypeBinder(_ getBytes _)(_ getBytes _)
-  implicit val characterStream: TypeBinder[java.io.Reader] =
-    TypeBinder(_ getCharacterStream _)(_ getCharacterStream _)
-  implicit val binaryStream: TypeBinder[java.io.InputStream] =
-    TypeBinder(_ getBinaryStream _)(_ getBinaryStream _)
+  implicit val string: TypeBinder[Option[String]] =
+    TypeBinder(_ getString _)(_ getString _).map(Option(_))
+  implicit val bytes: TypeBinder[Option[Array[Byte]]] =
+    TypeBinder(_ getBytes _)(_ getBytes _).map(Option(_))
+  implicit val characterStream: TypeBinder[Option[java.io.Reader]] =
+    TypeBinder(_ getCharacterStream _)(_ getCharacterStream _).map(Option(_))
+  implicit val binaryStream: TypeBinder[Option[java.io.InputStream]] =
+    TypeBinder(_ getBinaryStream _)(_ getBinaryStream _).map(Option(_))
 
-  implicit val url: TypeBinder[java.net.URL] =
-    TypeBinder(_ getURL _)(_ getURL _)
+  implicit val url: TypeBinder[Option[java.net.URL]] =
+    TypeBinder(_ getURL _)(_ getURL _).map(Option(_))
 }
 
 trait AutoUnwrapOption {
