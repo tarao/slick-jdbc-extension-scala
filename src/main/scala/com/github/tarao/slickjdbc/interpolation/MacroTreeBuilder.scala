@@ -11,7 +11,7 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
   import slick.jdbc.SQLActionBuilder
   import slick.profile.SqlAction
   import slick.dbio.{NoStream, Effect}
-  import util.NonEmpty
+  import com.github.tarao.nonempty.NonEmpty
 
   def abort(msg: String) = c.abort(c.enclosingPosition, msg)
 

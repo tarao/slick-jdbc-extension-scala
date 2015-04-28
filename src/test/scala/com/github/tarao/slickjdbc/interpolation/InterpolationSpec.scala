@@ -6,7 +6,7 @@ import helper.{UnitSpec, TraitSingletonBehavior}
 import slick.jdbc.SQLActionBuilder
 import slick.profile.SqlAction
 import slick.dbio.{NoStream, Effect}
-import util.NonEmpty
+import com.github.tarao.nonempty.NonEmpty
 
 class InterpolationSpec extends UnitSpec
     with TraitSingletonBehavior {

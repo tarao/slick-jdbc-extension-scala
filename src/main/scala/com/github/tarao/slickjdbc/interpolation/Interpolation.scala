@@ -2,6 +2,7 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
+import com.github.tarao.nonempty.NonEmpty
 import scala.language.implicitConversions
 import slick.jdbc.SQLActionBuilder
 import slick.profile.SqlAction
@@ -26,6 +27,6 @@ class SimpleString(value: String) extends Literal {
   override def toString = value
 }
 case class TableName(name: String) extends SimpleString(name)
-class ListPlaceholders(list: util.NonEmpty[Any]) extends Literal {
+class ListPlaceholders(list: NonEmpty[Any]) extends Literal {
   override def toString = "?, " * (list.size-1)
 }

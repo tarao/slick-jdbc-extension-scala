@@ -4,7 +4,7 @@ package interpolation
 
 import scala.annotation.implicitNotFound
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
-import util.NonEmpty
+import com.github.tarao.nonempty.NonEmpty
 
 trait ListParameter {
   @inline implicit
@@ -30,7 +30,7 @@ object CheckParameter {
 
 @implicitNotFound(msg = "Illegal parameter type: ${T}.\n" +
   "[NOTE] A list is not allowed since it may be empty and breaks the query.\n" +
-  "[NOTE] Pass a util.NonEmpty[] if you know that it is not empty.")
+  "[NOTE] Pass a com.github.tarao.nonempty.NonEmpty[] if you know that it is not empty.")
 sealed trait CheckList[-T]
 object CheckList {
   implicit def valid[T](implicit c: SP[T]): CheckList[T] =
