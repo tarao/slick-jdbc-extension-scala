@@ -126,7 +126,15 @@ class InterpolationSpec extends UnitSpec
       }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
 
       it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $entryIds"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalQuery {
         sql"SELECT * FROM entry WHERE entry_id IN (${NonEmpty(5)})"
+      }("SELECT * FROM entry WHERE entry_id IN (?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ${NonEmpty(5)}"
       }("SELECT * FROM entry WHERE entry_id IN (?)")
     }
 
@@ -300,7 +308,23 @@ class InterpolationSpec extends UnitSpec
         sqlu"""
           UPDATE entry
           SET flag = 1
+          WHERE entry_id IN $entryIds
+        """
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"""
+          UPDATE entry
+          SET flag = 1
           WHERE entry_id IN (${NonEmpty(5)})
+        """
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"""
+          UPDATE entry
+          SET flag = 1
+          WHERE entry_id IN ${NonEmpty(5)}
         """
       }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
     }

@@ -27,27 +27,30 @@ class LiteralSpec extends UnitSpec {
     }
   }
 
-  describe("ListPlaceholders") {
+  describe("Placeholders") {
     import com.github.tarao.nonempty.NonEmpty
 
     it("should be a Literal which takes a non-empty list") {
-      val placeholders = new ListPlaceholders(NonEmpty(1, 2, 3))
+      val placeholders = new Placeholders(NonEmpty(1, 2, 3))
       placeholders shouldBe a [Literal]
     }
 
-    it("should not take a maybe-empty list") {
-      assertTypeError("""
-        val placeholders = new ListPlaceholders(Seq(1,2,3))
-      """)
+    it("should prints to '?'s x (list size - 1)") {
+      val p1 = new Placeholders(NonEmpty(1, 2, 3))
+      p1.toString should equal ("?, ?, ")
+      val p2 = new Placeholders(NonEmpty(1, 2, 3, 4, 5))
+      p2.toString should equal ("?, ?, ?, ?, ")
+      val p3 = new Placeholders(NonEmpty(1))
+      p3.toString should equal ("")
     }
 
-    it("should prints to '?'s x list size - 1") {
-      val p1 = new ListPlaceholders(NonEmpty(1, 2, 3))
-      p1.toString should equal ("?, ?, ")
-      val p2 = new ListPlaceholders(NonEmpty(1, 2, 3, 4, 5))
-      p2.toString should equal ("?, ?, ?, ?, ")
-      val p3 = new ListPlaceholders(NonEmpty(1))
-      p3.toString should equal ("")
+    it("should prints to '?'s x (list size) with parenthesis at non-toplevel") {
+      val p1 = new Placeholders(NonEmpty(1, 2, 3), false)
+      p1.toString should equal ("(?, ?, ?)")
+      val p2 = new Placeholders(NonEmpty(1, 2, 3, 4, 5), false)
+      p2.toString should equal ("(?, ?, ?, ?, ?)")
+      val p3 = new Placeholders(NonEmpty(1), false)
+      p3.toString should equal ("(?)")
     }
   }
 }

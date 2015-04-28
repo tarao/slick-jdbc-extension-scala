@@ -75,18 +75,18 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     // val list = NonEmpty(1, 2, 3)
     // sql"some text with a ${list} value"
     // ~> SQLInterpolationImpl(
-    //      StringContext("some text with a #", "", " value")
-    //    ).sql(new ListPlaceholders(list), list)
+    //      StringContext("some text with a (#", "", ")#", " value")
+    //    ).sql(new Placeholders(list), list, "")
     // ~> ActionBasedSQLInterpolation(
-    //      StringContext("some text with a #", "", " value")
-    //    ).sql(new ListPlaceholders(list), list)
+    //      StringContext("some text with a (#", "", ")#", " value")
+    //    ).sql(new Placeholders(list), list, "")
     // => ActionBasedSQLInterpolation(
-    //      StringContext("some text with a #", "", " value")
-    //    ).sql("?, ?, ", list)
-    // => SQLActionBuilder(Seq("some text with a ?, ?, ? value"), ...)
+    //      StringContext("some text with a (#", "", ")#", " value")
+    //    ).sql("?, ?, ", list, "")
+    // => SQLActionBuilder(Seq("some text with a (?, ?, ?) value"), ...)
     //
-    // Note that the third "?" is be inserted by a conversion of
-    // argument `list`.
+    // Note that the third "?" is inserted by a conversion of argument
+    // `list`.
     val queryParts = new ListBuffer[Tree]
     val params = new ListBuffer[c.Expr[Any]]
     param.toList.iterator.zip(rawQueryParts.iterator).foreach { zipped =>
@@ -97,12 +97,20 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
         else (param, s, literal)
       } }
       if (!literal && param.actualType <:< typeOf[NonEmpty[Any]]) {
+        val (prefix, suffix) =
+          if (!s.matches("""(?s).*\(\s*""")) ("(", ")") else ("", "")
+
         // for "?, ?, ?, ..."
-        params.append(c.Expr(q"new $interpolation.ListPlaceholders(${param})"))
-        queryParts.append(q""" ${s + "#"} """)
+        params.append(c.Expr(q"new $interpolation.Placeholders(${param})"))
+        queryParts.append(q""" ${s + prefix + "#"} """)
         // for the last "?" (inserted by ActionBasedSQLInterpolation)
         params.append(param)
         queryParts.append(q""" ${""} """)
+
+        if (suffix.nonEmpty) {
+          params.append(c.Expr(q""" ${""} """))
+          queryParts.append(q""" ${suffix + "#"} """)
+        }
       } else {
         params.append(param)
         queryParts.append(q"$s")
