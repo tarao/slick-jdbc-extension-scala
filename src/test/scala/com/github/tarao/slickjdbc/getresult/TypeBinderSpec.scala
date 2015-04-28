@@ -2,9 +2,17 @@ package com.github.tarao
 package slickjdbc
 package getresult
 
+import scala.language.implicitConversions
 import helper.{UnitSpec, TraitSingletonBehavior}
 import org.scalamock.scalatest.MockFactory
 import java.sql.ResultSet
+import java.io.{
+  InputStream,
+  ByteArrayInputStream,
+  InputStreamReader,
+  BufferedReader,
+  Reader
+}
 
 class TypeBinderSpec extends UnitSpec with MockFactory {
   def column[T](rs: ResultSet, index: Int, expected: T)(implicit
@@ -834,6 +842,357 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
 
       it should behave like throwingFromColumn[Double](rs, 0)
       it should behave like throwingFromColumn[Double](rs, "null")
+    }
+  }
+
+  describe("TypeBinder[java.net.URL]") {
+    import java.net.URL
+
+    it("should be able to get a URL value") {
+      val rs = mock[ResultSet]
+      (rs.getURL(_: Int)).expects(1).repeat(2).returning(
+        new URL("http://github.com/tarao/")
+      )
+      (rs.getURL(_: String)).expects("column1").repeat(2).returning(
+        new URL("http://github.com/tarao/")
+      )
+
+      it should behave like
+        column(rs, 1, Option(new URL("http://github.com/tarao/")))
+      it should behave like
+        column(rs, "column1", Option(new URL("http://github.com/tarao/")))
+
+      assertTypeError("""
+        it should behave like
+          column(rs, 1, new URL("http://github.com/tarao/"))
+      """)
+      assertTypeError("""
+        it should behave like
+          column(rs, "column1", new URL("http://github.com/tarao/"))
+      """)
+
+      import AutoUnwrapOption._
+
+      it should behave like
+        column(rs, 1, new URL("http://github.com/tarao/"))
+      it should behave like
+        column(rs, "column1", new URL("http://github.com/tarao/"))
+    }
+
+    it("should not be able to get a URL from null") {
+      val rs = mock[ResultSet]
+      (rs.getURL(_: Int)).expects(0).repeat(2).returning(null)
+      (rs.getURL(_: String)).expects("null").repeat(2).returning(null)
+
+      it should behave like column[Option[URL]](rs, 0, None)
+      it should behave like column[Option[URL]](rs, "null", None)
+
+      import AutoUnwrapOption._
+
+      it should behave like throwingFromColumn[URL](rs, 0)
+      it should behave like throwingFromColumn[URL](rs, "null")
+    }
+  }
+
+  describe("TypeBinder[java.sql.Date]") {
+    import java.sql.Date
+
+    it("should be able to get a Date value") {
+      val today = new Date(System.currentTimeMillis)
+
+      val rs = mock[ResultSet]
+      (rs.getDate(_: Int)).expects(1).repeat(2).returning(today)
+      (rs.getDate(_: String)).expects("column1").repeat(2).returning(today)
+
+      it should behave like column(rs, 1, Option(today))
+      it should behave like column(rs, "column1", Option(today))
+
+      assertTypeError("""
+        it should behave like column(rs, 1, today)
+      """)
+      assertTypeError("""
+        it should behave like column(rs, "column1", today)
+      """)
+
+      import AutoUnwrapOption._
+
+      it should behave like column(rs, 1, today)
+      it should behave like column(rs, "column1", today)
+    }
+
+    it("should not be able to get a Date from null") {
+      val rs = mock[ResultSet]
+      (rs.getDate(_: Int)).expects(0).repeat(2).returning(null)
+      (rs.getDate(_: String)).expects("null").repeat(2).returning(null)
+
+      it should behave like column[Option[Date]](rs, 0, None)
+      it should behave like column[Option[Date]](rs, "null", None)
+
+      import AutoUnwrapOption._
+
+      it should behave like throwingFromColumn[Date](rs, 0)
+      it should behave like throwingFromColumn[Date](rs, "null")
+    }
+  }
+
+  describe("TypeBinder[java.sql.Time]") {
+    import java.sql.Time
+
+    it("should be able to get a Time value") {
+      val now = new Time(System.currentTimeMillis)
+
+      val rs = mock[ResultSet]
+      (rs.getTime(_: Int)).expects(1).repeat(2).returning(now)
+      (rs.getTime(_: String)).expects("column1").repeat(2).returning(now)
+
+      it should behave like column(rs, 1, Option(now))
+      it should behave like column(rs, "column1", Option(now))
+
+      assertTypeError("""
+        it should behave like column(rs, 1, now)
+      """)
+      assertTypeError("""
+        it should behave like column(rs, "column1", now)
+      """)
+
+      import AutoUnwrapOption._
+
+      it should behave like column(rs, 1, now)
+      it should behave like column(rs, "column1", now)
+    }
+
+    it("should not be able to get a Time from null") {
+      val rs = mock[ResultSet]
+      (rs.getTime(_: Int)).expects(0).repeat(2).returning(null)
+      (rs.getTime(_: String)).expects("null").repeat(2).returning(null)
+
+      it should behave like column[Option[Time]](rs, 0, None)
+      it should behave like column[Option[Time]](rs, "null", None)
+
+      import AutoUnwrapOption._
+
+      it should behave like throwingFromColumn[Time](rs, 0)
+      it should behave like throwingFromColumn[Time](rs, "null")
+    }
+  }
+
+  describe("TypeBinder[java.sql.Timestamp]") {
+    import java.sql.Timestamp
+
+    it("should be able to get a Timestamp value") {
+      val now = new Timestamp(System.currentTimeMillis)
+
+      val rs = mock[ResultSet]
+      (rs.getTimestamp(_: Int)).expects(1).repeat(2).returning(now)
+      (rs.getTimestamp(_: String)).expects("column1").repeat(2).returning(now)
+
+      it should behave like column(rs, 1, Option(now))
+      it should behave like column(rs, "column1", Option(now))
+
+      assertTypeError("""
+        it should behave like column(rs, 1, now)
+      """)
+      assertTypeError("""
+        it should behave like column(rs, "column1", now)
+      """)
+
+      import AutoUnwrapOption._
+
+      it should behave like column(rs, 1, now)
+      it should behave like column(rs, "column1", now)
+    }
+
+    it("should not be able to get a Timestamp from null") {
+      val rs = mock[ResultSet]
+      (rs.getTimestamp(_: Int)).expects(0).repeat(2).returning(null)
+      (rs.getTimestamp(_: String)).expects("null").repeat(2).returning(null)
+
+      it should behave like column[Option[Timestamp]](rs, 0, None)
+      it should behave like column[Option[Timestamp]](rs, "null", None)
+
+      import AutoUnwrapOption._
+
+      it should behave like throwingFromColumn[Timestamp](rs, 0)
+      it should behave like throwingFromColumn[Timestamp](rs, "null")
+    }
+  }
+
+  describe("TypeBinder[Array[Byte]]") {
+    it("should be able to get an Array[Byte] value") {
+      val rs = mock[ResultSet]
+      (rs.getBytes(_: Int)).expects(1).repeat(2).returning(
+        Array[Byte](1, 2, 3)
+      )
+      (rs.getBytes(_: String)).expects("column1").repeat(2).returning(
+        Array[Byte](1, 2, 3)
+      )
+      (rs.getBytes(_: Int)).expects(2).repeat(2).returning(
+        Array[Byte]()
+      )
+      (rs.getBytes(_: String)).expects("column2").repeat(2).returning(
+        Array[Byte]()
+      )
+
+      implicitly[TypeBinder[Option[Array[Byte]]]].apply(rs, 1).get should
+        be (Array[Byte](1, 2, 3))
+      implicitly[TypeBinder[Option[Array[Byte]]]].apply(rs, "column1").get should
+        be (Array[Byte](1, 2, 3))
+      implicitly[TypeBinder[Option[Array[Byte]]]].apply(rs, 2).get should
+        be (Array[Byte]())
+      implicitly[TypeBinder[Option[Array[Byte]]]].apply(rs, "column2").get should
+        be (Array[Byte]())
+
+      assertTypeError("""
+        it should behave like column(rs, 1, Array[Byte](1, 2, 3))
+      """)
+      assertTypeError("""
+        it should behave like column(rs, "column1", Array[Byte](1, 2, 3))
+      """)
+
+      import AutoUnwrapOption._
+
+      it should behave like column(rs, 1, Array[Byte](1, 2, 3))
+      it should behave like column(rs, "column1", Array[Byte](1, 2, 3))
+      it should behave like column(rs, 2, Array[Byte]())
+      it should behave like column(rs, "column2", Array[Byte]())
+    }
+
+    it("should not be able to get an Array[Byte] from null") {
+      val rs = mock[ResultSet]
+      (rs.getBytes(_: Int)).expects(0).repeat(2).returning(null)
+      (rs.getBytes(_: String)).expects("null").repeat(2).returning(null)
+
+      it should behave like column[Option[Array[Byte]]](rs, 0, None)
+      it should behave like column[Option[Array[Byte]]](rs, "null", None)
+
+      import AutoUnwrapOption._
+
+      it should behave like throwingFromColumn[Array[Byte]](rs, 0)
+      it should behave like throwingFromColumn[Array[Byte]](rs, "null")
+    }
+  }
+
+  class Reader2Seq(val r: Reader) {
+    def toSeq = {
+      val reader = new BufferedReader(r)
+      Iterator.continually{reader.read}.takeWhile(_ >= 0).toSeq
+    }
+  }
+  implicit def reader2Seq(r: Reader) = new Reader2Seq(r)
+
+  class InputStream2Seq(val is: InputStream) {
+    def toSeq = {
+      val reader = new BufferedReader(new InputStreamReader(is))
+      Iterator.continually{reader.read}.takeWhile(_ >= 0).toSeq
+    }
+  }
+  implicit def inputStream2Seq(is: InputStream) =
+    new Reader2Seq(new InputStreamReader(is))
+
+  describe("TypeBinder[java.io.InputStream]") {
+    it("should be able to get an InputStream value") {
+      val rs = mock[ResultSet]
+      (rs.getBinaryStream(_: Int)).expects(1).returning(
+        new ByteArrayInputStream(Array[Byte](1, 2, 3))
+      )
+      (rs.getBinaryStream(_: String)).expects("column1").returning(
+        new ByteArrayInputStream(Array[Byte](1, 2, 3))
+      )
+      (rs.getBinaryStream(_: Int)).expects(2).returning(
+        new ByteArrayInputStream(Array[Byte](4, 5, 6))
+      )
+      (rs.getBinaryStream(_: String)).expects("column2").returning(
+        new ByteArrayInputStream(Array[Byte](4, 5, 6))
+      )
+
+      implicitly[TypeBinder[Option[InputStream]]].apply(rs, 1)
+        .get.toSeq should be (Seq(1, 2, 3))
+      implicitly[TypeBinder[Option[InputStream]]].apply(rs, "column1")
+        .get.toSeq should be (Seq(1, 2, 3))
+
+      assertTypeError("""
+        implicitly[TypeBinder[InputStream]].apply(rs, 2)
+          .toSeq should be (Seq(4, 5, 6))
+      """)
+      assertTypeError("""
+        implicitly[TypeBinder[InputStream]].apply(rs, "column2")
+          .toSeq should be (Seq(4, 5, 6))
+      """)
+
+      import AutoUnwrapOption._
+
+      implicitly[TypeBinder[InputStream]].apply(rs, 2)
+        .toSeq should be (Seq(4, 5, 6))
+      implicitly[TypeBinder[InputStream]].apply(rs, "column2")
+        .toSeq should be (Seq(4, 5, 6))
+    }
+
+    it("should not be be able to get an InputStream from null") {
+      val rs = mock[ResultSet]
+      (rs.getBinaryStream(_: Int)).expects(0).repeat(2).returning(null)
+      (rs.getBinaryStream(_: String)).expects("null").repeat(2).returning(null)
+
+      it should behave like column[Option[InputStream]](rs, 0, None)
+      it should behave like column[Option[InputStream]](rs, "null", None)
+
+      import AutoUnwrapOption._
+
+      it should behave like throwingFromColumn[InputStream](rs, 0)
+      it should behave like throwingFromColumn[InputStream](rs, "null")
+    }
+  }
+
+  describe("TypeBinder[java.io.Reader]") {
+    it("should be able to get an InputStream value") {
+      val rs = mock[ResultSet]
+      (rs.getCharacterStream(_: Int)).expects(1).returning(
+        new InputStreamReader(new ByteArrayInputStream("foo bar".getBytes))
+      )
+      (rs.getCharacterStream(_: String)).expects("column1").returning(
+        new InputStreamReader(new ByteArrayInputStream("foo bar".getBytes))
+      )
+      (rs.getCharacterStream(_: Int)).expects(2).returning(
+        new InputStreamReader(new ByteArrayInputStream("foo bar".getBytes))
+      )
+      (rs.getCharacterStream(_: String)).expects("column2").returning(
+        new InputStreamReader(new ByteArrayInputStream("foo bar".getBytes))
+      )
+
+      implicitly[TypeBinder[Option[Reader]]].apply(rs, 1)
+        .get.toSeq.map(_.asInstanceOf[Char]).mkString should be ("foo bar")
+        equal (Seq(1, 2, 3))
+      implicitly[TypeBinder[Option[Reader]]].apply(rs, "column1")
+        .get.toSeq.map(_.asInstanceOf[Char]).mkString should be ("foo bar")
+
+      assertTypeError("""
+        implicitly[TypeBinder[Reader]].apply(rs, 2)
+          .toSeq.map(_.asInstanceOf[Char]).mkString should be ("foo bar")
+      """)
+      assertTypeError("""
+        implicitly[TypeBinder[Reader]].apply(rs, "column2")
+          .toSeq.map(_.asInstanceOf[Char]).mkString should be ("foo bar")
+      """)
+
+      import AutoUnwrapOption._
+
+      implicitly[TypeBinder[Reader]].apply(rs, 2)
+        .toSeq.map(_.asInstanceOf[Char]).mkString should be ("foo bar")
+      implicitly[TypeBinder[Reader]].apply(rs, "column2")
+        .toSeq.map(_.asInstanceOf[Char]).mkString should be ("foo bar")
+    }
+
+    it("should not be be able to get an Reader from null") {
+      val rs = mock[ResultSet]
+      (rs.getCharacterStream(_: Int)).expects(0).repeat(2).returning(null)
+      (rs.getCharacterStream(_: String)).expects("null").repeat(2).returning(null)
+
+      it should behave like column[Option[Reader]](rs, 0, None)
+      it should behave like column[Option[Reader]](rs, "null", None)
+
+      import AutoUnwrapOption._
+
+      it should behave like throwingFromColumn[Reader](rs, 0)
+      it should behave like throwingFromColumn[Reader](rs, "null")
     }
   }
 }
