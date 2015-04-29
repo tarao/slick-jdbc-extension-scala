@@ -8,7 +8,6 @@ lazy val slickjdbcextension = (project in file(".")).
     scalaVersion := "2.11.6",
 
     // Depenency
-    resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "com.typesafe.slick" %% "slick" % "3.0.0-RC3",
