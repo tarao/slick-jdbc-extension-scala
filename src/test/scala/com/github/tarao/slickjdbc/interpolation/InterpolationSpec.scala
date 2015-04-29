@@ -8,6 +8,10 @@ import slick.profile.SqlAction
 import slick.dbio.{NoStream, Effect}
 import com.github.tarao.nonempty.NonEmpty
 
+case class Single[T](value: T)
+case class Double[S, T](left: S, right: T)
+case class Triple[S, T, U](left: S, middle: T, right: U)
+
 class InterpolationSpec extends UnitSpec
     with TraitSingletonBehavior {
   def canonicalQuery(query: String) =
@@ -116,8 +120,8 @@ class InterpolationSpec extends UnitSpec
       """)
     }
 
-    it("should embed a non-empty list if it is explicitly enabled ") {
-      import ListParameter._
+    it("should embed a non-empty list if it is explicitly enabled") {
+      import CompoundParameter._
 
       val entryIds = NonEmpty(1, 2, 3, 4)
 
@@ -139,7 +143,7 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should not embed an option non-empty list") {
-      import ListParameter._
+      import CompoundParameter._
 
       val entryIds = Option(NonEmpty(1, 2, 3, 4))
 
@@ -159,21 +163,135 @@ class InterpolationSpec extends UnitSpec
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
       """)
 
-      import ListParameter._
+      import CompoundParameter._
 
       assertTypeError("""
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
       """)
     }
 
+    it("should embed a tuple") {
+      val entryIds = (1, 2, 3, 4)
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $entryIds"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+    }
+
+    it("should not embed a product or a signle tuple") {
+      val tuple1 = Tuple1(5)
+      val single = Single(5)
+      val double = Double(1, 2)
+      val triple = Triple(1, 2, 3)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE entry_id IN ($tuple1)"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE entry_id IN ($single)"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE entry_id IN ($double)"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE entry_id IN ($triple)"
+      """)
+    }
+
+    it("should embed a product or a signle tuple if they are explictly enabled") {
+      val entryIds = (1, 2, 3, 4)
+      val tuple1 = Tuple1(5)
+      val single = Single(5)
+      val double = Double(1, 2)
+      val triple = Triple(1, 2, 3)
+
+      import CompoundParameter._
+
+      // check if it doesn't break the normal tuple behavior
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $entryIds"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($tuple1)"
+      }("SELECT * FROM entry WHERE entry_id IN (?)")
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $tuple1"
+      }("SELECT * FROM entry WHERE entry_id IN (?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($single)"
+      }("SELECT * FROM entry WHERE entry_id IN (?)")
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $single"
+      }("SELECT * FROM entry WHERE entry_id IN (?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($double)"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?)")
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $double"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($triple)"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $triple"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
+    }
+
+    it("should not embed a non-empty list of product") {
+      val params = NonEmpty(
+        Single("http://example.com/1"),
+        Single("http://example.com/2"),
+        Single("http://example.com/3")
+      )
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE entry_id IN ($params)"
+      """)
+    }
+
+    it("should embed a non-empty list of product if it is explicitly enabled") {
+      // This works as if Single[Int] is an alias of Int
+      val params = NonEmpty(
+        Single(1),
+        Single(2),
+        Single(3)
+      )
+
+      import CompoundParameter._
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($params)"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $params"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
+    }
+
     it("should not embed a user-defined class value") {
       class Foo
       val param = new Foo
 
+      import CompoundParameter._
+
       assertTypeError("""
         sql"SELECT * FROM entry WHERE param = $param"
-      """
-      )
+      """)
     }
 
     it("should embed a user-defined class value with custom SetParameter") {
@@ -291,8 +409,16 @@ class InterpolationSpec extends UnitSpec
       """)
     }
 
-    it("should embed a non-empty list if it is explicitly enabled ") {
-      import ListParameter._
+    it("should not embed a non-empty list") {
+      val entryIds = NonEmpty(1, 2, 3, 4)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
+      """)
+    }
+
+    it("should embed a non-empty list if it is explicitly enabled") {
+      import CompoundParameter._
 
       val entryIds = NonEmpty(1, 2, 3, 4)
 
@@ -330,7 +456,7 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should not embed an option non-empty list") {
-      import ListParameter._
+      import CompoundParameter._
 
       val entryIds = Option(NonEmpty(1, 2, 3, 4))
 
@@ -354,16 +480,211 @@ class InterpolationSpec extends UnitSpec
         sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
       """)
 
-      import ListParameter._
+      import CompoundParameter._
 
       assertTypeError("""
         sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
       """)
     }
 
+    it("should embed a tuple") {
+      val entryIds = (1, 2, 3, 4)
+
+      it should behave like anIdenticalStatement {
+        sqlu"""
+          UPDATE entry
+          SET flag = 1
+          WHERE entry_id IN ($entryIds)
+        """
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"""
+          UPDATE entry
+          SET flag = 1
+          WHERE entry_id IN $entryIds
+        """
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
+    }
+
+    it("should not embed a product or a signle tuple") {
+      val tuple1 = Tuple1(5)
+      val single = Single(5)
+      val double = Double(1, 2)
+      val triple = Triple(1, 2, 3)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($tuple1)"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($single)"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($double)"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($triple)"
+      """)
+    }
+
+    it("should embed a product or a signle tuple if they are explictly enabled") {
+      val entryIds = (1, 2, 3, 4)
+      val tuple1 = Tuple1(5)
+      val single = Single(5)
+      val double = Double(1, 2)
+      val triple = Triple(1, 2, 3)
+
+      import CompoundParameter._
+
+      // check if it doesn't break the normal tuple behavior
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN $entryIds"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($tuple1)"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN $tuple1"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($single)"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN $single"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($double)"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?)")
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN $double"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($triple)"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?)")
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN $triple"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?)")
+    }
+
+    it("should not embed a non-empty list of product") {
+      val params1 = NonEmpty(
+        (1, "http://example.com/1"),
+        (2, "http://example.com/2"),
+        (3, "http://example.com/3")
+      )
+
+      val params2 = NonEmpty(
+        Tuple1("http://example.com/1"),
+        Tuple1("http://example.com/2"),
+        Tuple1("http://example.com/3")
+      )
+
+      val params3 = NonEmpty(
+        Single("http://example.com/1"),
+        Single("http://example.com/2"),
+        Single("http://example.com/3")
+      )
+
+      val params4 = NonEmpty(
+        Double(1, "http://example.com/1"),
+        Double(2, "http://example.com/2"),
+        Double(3, "http://example.com/3")
+      )
+
+      assertTypeError("""
+        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params1)"
+      """)
+
+      assertTypeError("""
+        sqlu"INSERT INTO entry (url) VALUES ($params2)"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($params3)"
+      """)
+
+      assertTypeError("""
+        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params4)"
+      """)
+    }
+
+    it("should embed a non-empty list of product if it is explicitly enabled") {
+      val params1 = NonEmpty(
+        (1, "http://example.com/1"),
+        (2, "http://example.com/2"),
+        (3, "http://example.com/3")
+      )
+
+      val params2 = NonEmpty(
+        Tuple1("http://example.com/1"),
+        Tuple1("http://example.com/2"),
+        Tuple1("http://example.com/3")
+      )
+
+      // This works as if Single[String] is an alias of String
+      val params3 = NonEmpty(
+        Single("http://example.com/1"),
+        Single("http://example.com/2"),
+        Single("http://example.com/3")
+      )
+
+      val params4 = NonEmpty(
+        Double(1, "http://example.com/1"),
+        Double(2, "http://example.com/2"),
+        Double(3, "http://example.com/3")
+      )
+
+      import CompoundParameter._
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params1)"
+      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (entry_id, url) VALUES $params1"
+      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (url) VALUES ($params2)"
+      }("INSERT INTO entry (url) VALUES (?), (?), (?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (url) VALUES $params2"
+      }("INSERT INTO entry (url) VALUES (?), (?), (?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($params3)"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN $params3"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params4)"
+      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (entry_id, url) VALUES $params4"
+      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
+    }
+
     it("should not embed a user-defined class value") {
       class Foo
       val param = new Foo
+
+      import CompoundParameter._
 
       assertTypeError("""
         sqlu"UPDATE entry SET flag = 1 WHERE param = $param"
@@ -420,10 +741,12 @@ class InterpolationSpec extends UnitSpec
   }
 }
 
-class ListParameterSpec extends UnitSpec
+class CompoundParameterSpec extends UnitSpec
     with TraitSingletonBehavior {
-  describe("object ListParameter") {
-    it should behave like exportingTheTraitMethods
-      [ListParameter](ListParameter)
+  describe("object CompoundParameter") {
+    it("should inherit the trait") {
+      it should behave like exportingTheTraitMethods
+        [CompoundParameter](CompoundParameter)
+    }
   }
 }

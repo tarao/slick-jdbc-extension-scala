@@ -57,7 +57,7 @@ trait TestDB extends BeforeAndAfterAll with BeforeAndAfterEach {
     db.run { sqlu"""
       CREATE TABLE IF NOT EXISTS entry (
         entry_id BIGINT NOT NULL PRIMARY KEY,
-        url VARCHAR(2048) UNIQUE
+        url VARCHAR(2048) NOT NULL UNIQUE
       )
     """ }
 

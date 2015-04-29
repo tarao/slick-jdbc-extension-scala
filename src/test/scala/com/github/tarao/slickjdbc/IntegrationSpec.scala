@@ -2,14 +2,14 @@ package com.github.tarao
 package slickjdbc
 
 import helper.{UnitSpec, TestDB, Repository}
-import interpolation.{SQLInterpolation, ListParameter, TableName}
+import interpolation.{SQLInterpolation, CompoundParameter, TableName}
 import getresult.{GetResult, AutoUnwrapOption}
 
 case class Entry(id: Long, url: String)
 
 /** A sample repository trait */
 trait EntryRepository extends Repository
-    with SQLInterpolation with ListParameter
+    with SQLInterpolation with CompoundParameter
     with GetResult with AutoUnwrapOption {
   import com.github.tarao.nonempty.NonEmpty
 
@@ -27,7 +27,13 @@ trait EntryRepository extends Repository
     """
   } }
 
-  def add(entry: Option[NonEmpty[Entry]]) = ???
+  def add(entries: Option[NonEmpty[Entry]]) = { entries match {
+    case Some(entries) => db.run { sqlu"""
+    | INSERT INTO ${table} (entry_id, url)
+    | VALUES $entries
+    """ }
+    case None => ()
+  } }
 
   def find(entryId: Long): Option[Entry] =
     db.run { sql"""
@@ -77,6 +83,16 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
       val entryIds =  Iterator.continually{ helper.FreshId()+0L }.take(10).toSeq
       val result = find(scala.util.Random.shuffle(entryIds).toSeq)
       result shouldBe Seq.empty
+    }
+  }
+
+  describe("INSERTing multiple entries") {
+    it("should succeed") {
+      val entries = Iterator.continually{ freshEntry }.take(10).toSeq
+      add(entries)
+
+      val result = find(entries.map(_.id).toSeq)
+      result should be (entries)
     }
   }
 }
