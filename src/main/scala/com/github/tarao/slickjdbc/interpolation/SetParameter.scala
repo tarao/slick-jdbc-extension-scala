@@ -6,12 +6,14 @@ import scala.annotation.implicitNotFound
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
 import com.github.tarao.nonempty.NonEmpty
 
-trait ListParameter {
+trait CompoundParameter {
+  implicit val SetProduct = SP.SetSimpleProduct
+
   @inline implicit
   def createSetList[T](implicit c: SP[T]): SetList[T, NonEmpty[T]] =
     new SetList[T, NonEmpty[T]](c)
 }
-object ListParameter extends ListParameter
+object CompoundParameter extends CompoundParameter
 
 /** SetParameter for non-empty list types. */
 class SetList[S, -T <: NonEmpty[S]](val c: SP[S]) extends SP[T] {
@@ -28,6 +30,14 @@ object CheckParameter {
     new CheckParameter[T] {}
 }
 
+@implicitNotFound(msg = "A product is passed.\n" +
+  "[NOTE] Use interpolation.CompoundParameter trait to enable passing a product.")
+sealed trait CheckProduct[-T]
+object CheckProduct {
+  implicit def valid[T](implicit c: SP[T]): CheckProduct[T] =
+    new CheckProduct[T] {}
+}
+
 @implicitNotFound(msg = "Illegal parameter type: ${T}.\n" +
   "[NOTE] A list is not allowed since it may be empty and breaks the query.\n" +
   "[NOTE] Pass a com.github.tarao.nonempty.NonEmpty[] if you know that it is not empty.")
@@ -37,18 +47,29 @@ object CheckList {
     new CheckList[T] {}
 }
 
-@implicitNotFound(msg = "Non-empty list is passed.\n" +
-  "[NOTE] Use interpolation.ListParameter trait to enable passing a non-empty list.")
+@implicitNotFound(msg = "A non-empty list is passed.\n" +
+  "[NOTE] Use interpolation.CompoundParameter trait to enable passing a non-empty list.")
 sealed trait CheckNonEmpty[-T]
 object CheckNonEmpty {
   implicit def valid[T](implicit c: SP[T]): CheckNonEmpty[T] =
     new CheckNonEmpty[T] {}
 }
 
-@implicitNotFound(msg = "Maybe-non-empty list is passed.\n" +
+sealed trait NoOptionNonEmpty[-T]
+object NoOptionNonEmpty {
+  implicit def valid[T]: NoOptionNonEmpty[T] = new NoOptionNonEmpty[T] {}
+  implicit def ambig1[T]: NoOptionNonEmpty[Option[NonEmpty[T]]] =
+    sys.error("unexpected")
+  implicit def ambig2[T]: NoOptionNonEmpty[Option[NonEmpty[T]]] =
+    sys.error("unexpected")
+}
+
+@implicitNotFound(msg = "A maybe-non-empty list is passed.\n" +
   "[NOTE] Break it into Some(_) or None to confirm that it is not empty.")
 sealed trait CheckOptionNonEmpty[-T]
 object CheckOptionNonEmpty {
-  implicit def valid[T](implicit c: SP[T]): CheckOptionNonEmpty[T] =
-    new CheckOptionNonEmpty[T] {}
+  implicit def valid[T](implicit
+    check: NoOptionNonEmpty[T],
+    c: SP[T]
+  ): CheckOptionNonEmpty[T] = new CheckOptionNonEmpty[T] {}
 }

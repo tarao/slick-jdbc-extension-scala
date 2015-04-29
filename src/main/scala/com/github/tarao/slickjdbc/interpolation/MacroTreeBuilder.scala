@@ -30,6 +30,8 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
   private val interpolation = q"$NS.interpolation"
   private lazy val CheckParameter =
     tq"""$interpolation.${TypeName("CheckParameter")}"""
+  private lazy val CheckProduct =
+    tq"""$interpolation.${TypeName("CheckProduct")}"""
   private lazy val CheckList =
     tq"""$interpolation.${TypeName("CheckList")}"""
   private lazy val CheckNonEmpty =
@@ -40,6 +42,9 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     q"implicitly[$base[$required]]"
   private val Translators =
     tq"Traversable[$NS.query.Translator]"
+
+  private def isCompoundType(t: Type): Boolean =
+    Seq(typeOf[NonEmpty[Any]], typeOf[Product]).exists(t <:< _)
 
   def invokeInterpolation(param: c.Expr[Any]*): Tree = {
     val stats = new ListBuffer[Tree]
@@ -89,6 +94,17 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     // `list`.
     val queryParts = new ListBuffer[Tree]
     val params = new ListBuffer[c.Expr[Any]]
+    def pushLiteral(literal: String) {
+        params.append(c.Expr(q""" ${""} """))
+        queryParts.append(q""" ${literal + "#"} """)
+    }
+    def mayCompleteParen(param: c.Expr[Any], s: String)(block: => Unit) {
+      if (!s.matches("""(?s).*\(\s*""")) {
+        pushLiteral("(")
+        block
+        pushLiteral(")")
+      } else block
+    }
     param.toList.iterator.zip(rawQueryParts.iterator).foreach { zipped =>
       val (param, s, literal) = zipped match { case (param, s) => {
         val literal = s.reverseIterator.takeWhile(_ == '#').length % 2 == 1
@@ -96,20 +112,16 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
           (param, s + { if (literal) "" else "#" }, true)
         else (param, s, literal)
       } }
-      if (!literal && param.actualType <:< typeOf[NonEmpty[Any]]) {
-        val (prefix, suffix) =
-          if (!s.matches("""(?s).*\(\s*""")) ("(", ")") else ("", "")
+      if (!literal && isCompoundType(param.actualType)) {
+        pushLiteral(s)
 
-        // for "?, ?, ?, ..."
-        params.append(c.Expr(q"new $interpolation.Placeholders(${param})"))
-        queryParts.append(q""" ${s + prefix + "#"} """)
-        // for the last "?" (inserted by ActionBasedSQLInterpolation)
-        params.append(param)
-        queryParts.append(q""" ${""} """)
-
-        if (suffix.nonEmpty) {
-          params.append(c.Expr(q""" ${""} """))
-          queryParts.append(q""" ${suffix + "#"} """)
+        mayCompleteParen(param, s) {
+          // for "?, ?, ?, ..."
+          params.append(c.Expr(q"new $interpolation.Placeholders(${param})"))
+          queryParts.append(q""" ${"#"} """)
+          // for the last "?" (inserted by ActionBasedSQLInterpolation)
+          params.append(param)
+          queryParts.append(q""" ${""} """)
         }
       } else {
         params.append(param)
@@ -118,12 +130,17 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
 
       // Insert parameter type checker for a fine type error message
       if (!literal) {
+        // The order is significant since there can be a type matches
+        // with multiple conditions for example an
+        // Option[NonEmpty[Any]] is also a Product.
         if (param.actualType <:< typeOf[NonEmpty[Any]])
           stats.append(checkParameter(param.actualType, CheckNonEmpty))
         else if (param.actualType <:< typeOf[Option[NonEmpty[Any]]])
           stats.append(checkParameter(param.actualType, CheckOptionNonEmpty))
         else if (param.actualType <:< typeOf[Traversable[Any]])
           stats.append(checkParameter(param.actualType, CheckList))
+        else if (param.actualType <:< typeOf[Product])
+          stats.append(checkParameter(param.actualType, CheckProduct))
         else
           stats.append(checkParameter(param.actualType))
       }

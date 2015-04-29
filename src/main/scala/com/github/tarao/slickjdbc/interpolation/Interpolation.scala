@@ -28,17 +28,20 @@ class SimpleString(value: String) extends Literal {
 }
 case class TableName(name: String) extends SimpleString(name)
 
-case class Placeholders(val value: Any, val topLevel: Boolean = true)
+class Placeholders(val value: Any, val topLevel: Boolean = true)
     extends Literal {
   def toCompleteString: String = {
-    def rec(v: Any) = Placeholders(v, false).toString
+    def rec(v: Any) = new Placeholders(v, false).toString
     val (single, elements) = value match {
-      case l: NonEmpty[Any] => (false, l.map(rec))
+      case s: Tuple1[_] => (false, Iterator.single(rec(s._1)))
+      case p: Product => (p.productArity == 1, p.productIterator.map(rec))
+      case l: NonEmpty[_] => (false, l.map(rec))
       case _ => (true, Iterator.single(new Placeholders(this, false) {
         override def toCompleteString: String = "?"
       }.toString) )
     }
-    if (single) elements.toSeq.head else elements.mkString("(", ", ", ")")
+    if (single) elements.toSeq.head
+    else s"""(${stripParen(elements.mkString(", "))})"""
   }
   private def stripParen(str: String) = str.stripPrefix("(").stripSuffix(")")
   private def dropLast(str: String) = str.stripSuffix("?")
