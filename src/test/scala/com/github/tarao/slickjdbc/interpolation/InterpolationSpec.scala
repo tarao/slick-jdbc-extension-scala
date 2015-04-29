@@ -8,6 +8,7 @@ import slick.profile.SqlAction
 import slick.dbio.{NoStream, Effect}
 import com.github.tarao.nonempty.NonEmpty
 
+case class EmptyTuple()
 case class Single[T](value: T)
 case class Double[S, T](left: S, right: T)
 case class Triple[S, T, U](left: S, middle: T, right: U)
@@ -180,6 +181,14 @@ class InterpolationSpec extends UnitSpec
       it should behave like anIdenticalQuery {
         sql"SELECT * FROM entry WHERE entry_id IN $entryIds"
       }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+    }
+
+    it("should fail to embed a nullary product") {
+      import CompoundParameter._
+
+      val empty = EmptyTuple()
+      a [java.sql.SQLException] should be thrownBy
+        sql"SELECT * FROM entry WHERE param = $empty"
     }
 
     it("should not embed a product or a signle tuple") {
@@ -537,6 +546,14 @@ class InterpolationSpec extends UnitSpec
           WHERE entry_id IN $entryIds
         """
       }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
+    }
+
+    it("should fail to embed a nullary product") {
+      import CompoundParameter._
+
+      val empty = EmptyTuple()
+      a [java.sql.SQLException] should be thrownBy
+        sqlu"UPDATE entry SET flag = 1 WHERE param = $empty"
     }
 
     it("should not embed a product or a signle tuple") {

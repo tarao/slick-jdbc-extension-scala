@@ -34,6 +34,8 @@ class Placeholders(val value: Any, val topLevel: Boolean = true)
     def rec(v: Any) = new Placeholders(v, false).toString
     val (single, elements) = value match {
       case s: Tuple1[_] => (false, Iterator.single(rec(s._1)))
+      case p: Product if p.productArity <= 0 =>
+        throw new java.sql.SQLException("No value to bind for " + p)
       case p: Product => (p.productArity == 1, p.productIterator.map(rec))
       case l: NonEmpty[_] => (false, l.map(rec))
       case _ => (true, Iterator.single(new Placeholders(this, false) {
