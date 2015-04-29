@@ -2,9 +2,9 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
+import util.NonEmpty
 import scala.annotation.implicitNotFound
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
-import com.github.tarao.nonempty.NonEmpty
 
 trait CompoundParameter {
   implicit val createSetProduct: SP[Product] = SetProduct
@@ -49,7 +49,7 @@ object CheckProduct {
 
 @implicitNotFound(msg = "Illegal parameter type: ${T}.\n" +
   "[NOTE] A list is not allowed since it may be empty and breaks the query.\n" +
-  "[NOTE] Pass a com.github.tarao.nonempty.NonEmpty[] if you know that it is not empty.")
+  "[NOTE] Pass a util.NonEmpty[] if you know that it is not empty.")
 sealed trait CheckList[-T]
 object CheckList {
   implicit def valid[T](implicit c: SP[T]): CheckList[T] =

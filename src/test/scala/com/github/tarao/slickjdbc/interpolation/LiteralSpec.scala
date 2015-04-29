@@ -28,7 +28,7 @@ class LiteralSpec extends UnitSpec {
   }
 
   describe("Placeholders") {
-    import com.github.tarao.nonempty.NonEmpty
+    import util.NonEmpty
 
     it("should be a Literal which takes a non-empty list") {
       val placeholders = new Placeholders(NonEmpty(1, 2, 3))

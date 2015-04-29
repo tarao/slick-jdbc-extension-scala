@@ -2,6 +2,7 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
+import util.NonEmpty
 import interpolation.{Literal => LiteralParameter}
 import scala.reflect.macros.blackbox.Context
 
@@ -11,7 +12,6 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
   import slick.jdbc.SQLActionBuilder
   import slick.profile.SqlAction
   import slick.dbio.{NoStream, Effect}
-  import com.github.tarao.nonempty.NonEmpty
 
   def abort(msg: String) = c.abort(c.enclosingPosition, msg)
 

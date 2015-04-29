@@ -12,7 +12,7 @@ case class Entry(id: Long, url: URL)
 trait EntryRepository extends Repository
     with SQLInterpolation with CompoundParameter
     with GetResult with AutoUnwrapOption {
-  import com.github.tarao.nonempty.NonEmpty
+  import util.NonEmpty
 
   implicit val getEntryResult = getResult { Entry(
     column("entry_id"),
@@ -143,7 +143,7 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
 trait IdsRepository extends Repository
     with SQLInterpolation with CompoundParameter
     with GetResult with AutoUnwrapOption {
-  import com.github.tarao.nonempty.NonEmpty
+  import util.NonEmpty
 
   def add(ids: Option[NonEmpty[Tuple1[Long]]]) = ids match {
     case Some(ids) => db.run { sqlu"""

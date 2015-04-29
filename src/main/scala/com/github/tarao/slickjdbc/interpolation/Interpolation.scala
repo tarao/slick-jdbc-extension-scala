@@ -2,7 +2,7 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
-import com.github.tarao.nonempty.NonEmpty
+import util.NonEmpty
 import scala.language.implicitConversions
 import slick.jdbc.SQLActionBuilder
 import slick.profile.SqlAction

@@ -2,11 +2,11 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
+import util.NonEmpty
 import helper.{UnitSpec, TraitSingletonBehavior}
 import slick.jdbc.SQLActionBuilder
 import slick.profile.SqlAction
 import slick.dbio.{NoStream, Effect}
-import com.github.tarao.nonempty.NonEmpty
 
 case class EmptyTuple()
 case class Single[T](value: T)
