@@ -61,6 +61,12 @@ trait TestDB extends BeforeAndAfterAll with BeforeAndAfterEach {
       )
     """ }
 
+    db.run { sqlu"""
+      CREATE TABLE IF NOT EXISTS ids (
+        id BIGINT NOT NULL PRIMARY KEY
+      )
+    """ }
+
     super.beforeAll
   }
 

@@ -24,35 +24,35 @@ trait EntryRepository extends Repository
 
   val table = TableName("entry")
 
-  def add1(entry: Entry) {
+  def add1(entry: Entry) =
     db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES (${entry.id}, ${entry.url})
     """
-  } }
+  }
 
-  def add2(entry: Entry) {
+  def add2(entry: Entry) =
     db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES ${(entry.id, entry.url)}
     """
-  } }
+  }
 
-  def add1(entries: Option[NonEmpty[Entry]]) = { entries match {
+  def add1(entries: Option[NonEmpty[Entry]]) = entries match {
     case Some(entries) => db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES $entries
     """ }
     case None => ()
-  } }
+  }
 
-  def add2(entries: Option[NonEmpty[(Long, URL)]]) = { entries match {
+  def add2(entries: Option[NonEmpty[(Long, URL)]]) = entries match {
     case Some(entries) => db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES $entries
     """ }
     case None => ()
-  } }
+  }
 
   def find(entryId: Long): Option[Entry] =
     db.run { sql"""
@@ -135,6 +135,60 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
 
       val result2 = findByUrls(entries2.map(_.url).toSeq)
       result2 should be (entries2)
+    }
+  }
+}
+
+/** A sample repository trait */
+trait IdsRepository extends Repository
+    with SQLInterpolation with CompoundParameter
+    with GetResult with AutoUnwrapOption {
+  import com.github.tarao.nonempty.NonEmpty
+
+  def add(ids: Option[NonEmpty[Tuple1[Long]]]) = ids match {
+    case Some(ids) => db.run { sqlu"""
+    | INSERT INTO ids (id)
+    | VALUES ($ids)
+    """ }
+    case None => ()
+  }
+
+  def addBadly(ids: Option[NonEmpty[Long]]) = ids match {
+    case Some(ids) => db.run { sqlu"""
+    | INSERT INTO ids (id)
+    | VALUES ($ids)
+    """ }
+    case None => ()
+  }
+
+  def find(ids: Option[NonEmpty[Long]]) = ids match {
+    case Some(ids) => db.run { sql"""
+    | SELECT * FROM ids
+    | WHERE id IN $ids
+    | ORDER BY id ASC
+    """.as[Long] }
+    case None => Seq.empty
+  }
+}
+
+class SingleTupleSpec extends UnitSpec with TestDB with IdsRepository {
+  def freshId = helper.FreshId().asInstanceOf[Long]
+
+  describe("SELECTing multiple records INSERTed by single tuples") {
+    it("should succeed") {
+      val ids = Iterator.continually{ freshId }.take(10).toSeq
+      val tuples = ids.map(Tuple1(_))
+      add(tuples)
+
+      val result = find(scala.util.Random.shuffle(ids).toSeq)
+      result should be (ids)
+    }
+  }
+
+  describe("INSERTing single columns by a list") {
+    it("should fail") {
+      val ids = Iterator.continually{ freshId }.take(10).toSeq
+      a [java.sql.SQLException] should be thrownBy addBadly(ids)
     }
   }
 }
