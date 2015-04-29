@@ -283,6 +283,38 @@ class InterpolationSpec extends UnitSpec
       }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
     }
 
+    it("should not embed an option value") {
+      val param = Option(3)
+      val params = NonEmpty(Option(3))
+      val tuple = (Option(3), 2, 1)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE param = $param"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE params IN ($params)"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE params IN ($tuple)"
+      """)
+
+      import CompoundParameter._
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE param = $param"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE params IN ($params)"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE params IN ($tuple)"
+      """)
+    }
+
     it("should not embed a user-defined class value") {
       class Foo
       val param = new Foo
@@ -678,6 +710,38 @@ class InterpolationSpec extends UnitSpec
       it should behave like anIdenticalStatement {
         sqlu"INSERT INTO entry (entry_id, url) VALUES $params4"
       }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
+    }
+
+    it("should not embed an option value") {
+      val param = Option(3)
+      val params = NonEmpty(Option(3))
+      val tuple = (Option(3), 2, 1)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE param = $param"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($params)"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($tuple)"
+      """)
+
+      import CompoundParameter._
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE param = $param"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($params)"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($tuple)"
+      """)
     }
 
     it("should not embed a user-defined class value") {

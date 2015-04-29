@@ -38,6 +38,8 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     tq"""$interpolation.${TypeName("CheckNonEmpty")}"""
   private lazy val CheckOptionNonEmpty =
     tq"""$interpolation.${TypeName("CheckOptionNonEmpty")}"""
+  private lazy val CheckOption =
+    tq"""$interpolation.${TypeName("CheckOption")}"""
   private def checkParameter(required: Type, base: Tree = CheckParameter) =
     q"implicitly[$base[$required]]"
   private val Translators =
@@ -128,21 +130,29 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
         queryParts.append(q"$s")
       }
 
-      // Insert parameter type checker for a fine type error message
       if (!literal) {
+        // Insert parameter type checker for a fine type error message.
+
         // The order is significant since there can be a type matches
         // with multiple conditions for example an
         // Option[NonEmpty[Any]] is also a Product.
+
         if (param.actualType <:< typeOf[NonEmpty[Any]])
           stats.append(checkParameter(param.actualType, CheckNonEmpty))
         else if (param.actualType <:< typeOf[Option[NonEmpty[Any]]])
           stats.append(checkParameter(param.actualType, CheckOptionNonEmpty))
         else if (param.actualType <:< typeOf[Traversable[Any]])
           stats.append(checkParameter(param.actualType, CheckList))
-        else if (param.actualType <:< typeOf[Product])
+
+        param.actualType.foreach { t =>
+          if (t <:< typeOf[Option[Any]])
+            stats.append(checkParameter(t, CheckOption))
+        }
+
+        if (param.actualType <:< typeOf[Product])
           stats.append(checkParameter(param.actualType, CheckProduct))
-        else
-          stats.append(checkParameter(param.actualType))
+
+        stats.append(checkParameter(param.actualType))
       }
     }
     queryParts.append(q"${rawQueryParts.last}")

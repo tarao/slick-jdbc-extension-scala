@@ -82,3 +82,21 @@ object CheckOptionNonEmpty {
     c: SP[T]
   ): CheckOptionNonEmpty[T] = new CheckOptionNonEmpty[T] {}
 }
+
+sealed trait NoOption[-T]
+object NoOption {
+  implicit def valid[T]: NoOption[T] = new NoOption[T] {}
+  implicit def ambig1[S]: NoOption[Option[S]] = sys.error("unexpected")
+  implicit def ambig2[S]: NoOption[Option[S]] = sys.error("unexpected")
+}
+
+@implicitNotFound(msg = "Illegal parameter type: ${T}\n" +
+  "[NOTE] An option is not allowed since it may be none and breaks the query.\n" +
+  "[NOTE] Break it into Some(_) or None to confirm that it has a value.")
+sealed trait CheckOption[-T]
+object CheckOption {
+  implicit def valid[T](implicit
+    check: NoOption[T],
+    c: SP[T]
+  ): CheckOption[T] = new CheckOption[T] {}
+}
