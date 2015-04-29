@@ -7,7 +7,7 @@ import slick.jdbc.{SetParameter => SP, PositionedParameters}
 import com.github.tarao.nonempty.NonEmpty
 
 trait CompoundParameter {
-  implicit val SetProduct = SP.SetSimpleProduct
+  implicit val createSetProduct: SP[Product] = SetProduct
 
   @inline implicit
   def createSetList[T](implicit c: SP[T]): SetList[T, NonEmpty[T]] =
@@ -20,6 +20,15 @@ class SetList[S, -T <: NonEmpty[S]](val c: SP[S]) extends SP[T] {
   def apply(param: T, pp: PositionedParameters): Unit = {
     param.foreach { item => c.asInstanceOf[SP[Any]](item, pp) }
   }
+}
+
+/** SetParameter for product types especially for case classes. */
+object SetProduct extends SP[Product] {
+  def apply(prod: Product, pp: PositionedParameters): Unit =
+    for (v <- prod.productIterator) v match {
+      case p: Product => SetProduct(p, pp)
+      case v => SP.SetSimpleProduct(Tuple1(v), pp)
+    }
 }
 
 @implicitNotFound(msg = "Unsupported parameter type: ${T}.\n" +

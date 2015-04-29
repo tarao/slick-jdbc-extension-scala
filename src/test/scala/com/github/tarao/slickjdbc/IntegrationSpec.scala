@@ -3,9 +3,10 @@ package slickjdbc
 
 import helper.{UnitSpec, TestDB, Repository}
 import interpolation.{SQLInterpolation, CompoundParameter, TableName}
-import getresult.{GetResult, AutoUnwrapOption}
+import getresult.{GetResult, AutoUnwrapOption, TypeBinder}
 
-case class Entry(id: Long, url: String)
+case class URL(url: String)
+case class Entry(id: Long, url: URL)
 
 /** A sample repository trait */
 trait EntryRepository extends Repository
@@ -17,6 +18,9 @@ trait EntryRepository extends Repository
     column("entry_id"),
     column("url")
   ) }
+  implicit def urlBinder(implicit
+    binder: TypeBinder[Option[String]]
+  ): TypeBinder[Option[URL]] = binder.map(_.map(URL(_)))
 
   val table = TableName("entry")
 
@@ -49,12 +53,21 @@ trait EntryRepository extends Repository
     """.as[Entry] }
     case None => Seq.empty
   }
+
+  def findByUrls(urls: Option[NonEmpty[URL]]) = urls match {
+    case Some(urls) => db.run { sql"""
+    | SELECT * FROM ${table}
+    | WHERE url IN ($urls)
+    | ORDER BY entry_id ASC
+    """.as[Entry] }
+    case None => Seq.empty
+  }
 }
 
 class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
   def freshEntry = {
     val id = helper.FreshId()
-    Entry(id, "http://example.com/" + id)
+    Entry(id, URL("http://example.com/" + id))
   }
 
   describe("SELECTing a record") {
@@ -75,8 +88,13 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
       val entries = Iterator.continually{ freshEntry }.take(10).toSeq
       for (e <- entries) add(e)
 
-      val result = find(scala.util.Random.shuffle(entries.map(_.id)).toSeq)
-      result should be (entries)
+      val entryIds = scala.util.Random.shuffle(entries.map(_.id)).toSeq
+      val result1 = find(entryIds)
+      result1 should be (entries)
+
+      val urls = scala.util.Random.shuffle(entries.map(_.url)).toSeq
+      val result2 = findByUrls(urls)
+      result2 should be (entries)
     }
 
     it("should return an empty list if nothing matched") {
