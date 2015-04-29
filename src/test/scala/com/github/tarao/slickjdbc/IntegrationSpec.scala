@@ -24,14 +24,29 @@ trait EntryRepository extends Repository
 
   val table = TableName("entry")
 
-  def add(entry: Entry) {
+  def add1(entry: Entry) {
     db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES (${entry.id}, ${entry.url})
     """
   } }
 
-  def add(entries: Option[NonEmpty[Entry]]) = { entries match {
+  def add2(entry: Entry) {
+    db.run { sqlu"""
+    | INSERT INTO ${table} (entry_id, url)
+    | VALUES ${(entry.id, entry.url)}
+    """
+  } }
+
+  def add1(entries: Option[NonEmpty[Entry]]) = { entries match {
+    case Some(entries) => db.run { sqlu"""
+    | INSERT INTO ${table} (entry_id, url)
+    | VALUES $entries
+    """ }
+    case None => ()
+  } }
+
+  def add2(entries: Option[NonEmpty[(Long, URL)]]) = { entries match {
     case Some(entries) => db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES $entries
@@ -73,7 +88,7 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
   describe("SELECTing a record") {
     it("should succeed") {
       val entry = freshEntry
-      add(entry)
+      add1(entry)
       val result = find(entry.id)
       result shouldBe Some(entry)
     }
@@ -85,16 +100,19 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
 
   describe("SELECTing multiple entries") {
     it("should succeed") {
-      val entries = Iterator.continually{ freshEntry }.take(10).toSeq
-      for (e <- entries) add(e)
+      val entries1 = Iterator.continually{ freshEntry }.take(10).toSeq
+      for (e <- entries1) add1(e)
 
-      val entryIds = scala.util.Random.shuffle(entries.map(_.id)).toSeq
+      val entryIds = scala.util.Random.shuffle(entries1.map(_.id)).toSeq
       val result1 = find(entryIds)
-      result1 should be (entries)
+      result1 should be (entries1)
 
-      val urls = scala.util.Random.shuffle(entries.map(_.url)).toSeq
+      val entries2 = Iterator.continually{ freshEntry }.take(10).toSeq
+      for (e <- entries2) add2(e)
+
+      val urls = scala.util.Random.shuffle(entries2.map(_.url)).toSeq
       val result2 = findByUrls(urls)
-      result2 should be (entries)
+      result2 should be (entries2)
     }
 
     it("should return an empty list if nothing matched") {
@@ -106,11 +124,17 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
 
   describe("INSERTing multiple entries") {
     it("should succeed") {
-      val entries = Iterator.continually{ freshEntry }.take(10).toSeq
-      add(entries)
+      val entries1 = Iterator.continually{ freshEntry }.take(10).toSeq
+      add1(entries1)
 
-      val result = find(entries.map(_.id).toSeq)
-      result should be (entries)
+      val result1 = find(entries1.map(_.id).toSeq)
+      result1 should be (entries1)
+
+      val entries2 = Iterator.continually{ freshEntry }.take(10).toSeq
+      add2(entries2.map{ e => (e.id, e.url) })
+
+      val result2 = findByUrls(entries2.map(_.url).toSeq)
+      result2 should be (entries2)
     }
   }
 }
