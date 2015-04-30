@@ -1,4 +1,4 @@
-slick-jdbc-extension
+slick-jdbc-extension [![Build Status][travis-img]][travis]
 ====================
 
 An extension to `slick.jdbc`, [Slick][slick]'s plain SQL queries,
@@ -417,3 +417,6 @@ defined before for `case class Entry(id: Long, url: String)` but the
 [slick]: http://slick.typesafe.com/
 [nonempty]: https://github.com/tarao/nonempty-scala
 [scalikejdbc]: http://scalikejdbc.org/
+
+[travis]: https://travis-ci.org/tarao/slick-jdbc-extension-scala
+[travis-img]: https://img.shields.io/travis/tarao/slick-jdbc-extension-scala.svg?branch=master&style=flat
