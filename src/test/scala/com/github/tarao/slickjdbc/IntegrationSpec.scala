@@ -18,6 +18,9 @@ trait EntryRepository extends Repository
     column("entry_id"),
     column("url")
   ) }
+  implicit val getTupleResult = getResult {
+    ( column[Long]("entry_id"), column[String]("url") )
+  }
   implicit def urlBinder(implicit
     binder: TypeBinder[Option[String]]
   ): TypeBinder[Option[URL]] = binder.map(_.map(URL(_)))
@@ -60,6 +63,12 @@ trait EntryRepository extends Repository
     | WHERE entry_id = $entryId
     """.as[Entry] }.headOption
 
+  def findAsTuple(entryId: Long): Option[(Long, String)] =
+    db.run { sql"""
+    | SELECT * FROM ${table}
+    | WHERE entry_id = $entryId
+    """.as[(Long, String)] }.headOption
+
   def find(entryIds: Option[NonEmpty[Long]]) = entryIds match {
     case Some(ids) => db.run { sql"""
     | SELECT * FROM ${table}
@@ -95,6 +104,19 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
 
     it("should fail if nothing matched") {
       find(helper.FreshId.max) shouldBe empty
+    }
+  }
+
+  describe("SELECTing a record as a tuple") {
+    it("should succeed") {
+      val entry = freshEntry
+      add1(entry)
+      val result = findAsTuple(entry.id)
+      result shouldBe Some( (entry.id, entry.url.url) )
+    }
+
+    it("should fail if nothing matched") {
+      findAsTuple(helper.FreshId.max) shouldBe empty
     }
   }
 
