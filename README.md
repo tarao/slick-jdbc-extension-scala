@@ -1,4 +1,4 @@
-slick-jdbc-extension [![Build Status][travis-img]][travis]
+slick-jdbc-extension [![Build Status][travis-img]][travis] [![Maven Central][maven-img]][maven]
 ====================
 
 An extension to `slick.jdbc`, [Slick][slick]'s plain SQL queries,
@@ -14,6 +14,20 @@ including the following features.
 - [Result mapper by column name](#getresult)
 
 These features can be selectively enabled.
+
+## <a name="install"></a> Getting started
+
+Add dependency in your `build.sbt` as the following.
+
+```scala
+    libraryDependencies ++= Seq(
+      ...
+      "com.github.tarao" %% "slick-jdbc-extension" % "0.0.1"
+    )
+```
+
+The library is available on [Maven Central][maven].  Currently,
+supported Scala version is 2.11.
 
 ## <a name="overview"></a> Overview
 
@@ -420,3 +434,5 @@ defined before for `case class Entry(id: Long, url: String)` but the
 
 [travis]: https://travis-ci.org/tarao/slick-jdbc-extension-scala
 [travis-img]: https://img.shields.io/travis/tarao/slick-jdbc-extension-scala.svg?branch=master&style=flat
+[maven]: https://maven-badges.herokuapp.com/maven-central/com.github.tarao/slick-jdbc-extension_2.11
+[maven-img]: https://maven-badges.herokuapp.com/maven-central/com.github.tarao/slick-jdbc-extension_2.11/badge.svg?style=flat
