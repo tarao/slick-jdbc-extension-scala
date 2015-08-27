@@ -143,6 +143,20 @@ class InterpolationSpec extends UnitSpec
       }("SELECT * FROM entry WHERE entry_id IN (?)")
     }
 
+    it("should embed a non-empty set if it is explicitly enabled") {
+      import CompoundParameter._
+
+      val entryIds = NonEmpty.fromTraversable(Set(1, 2, 3, 4)).get
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $entryIds"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+    }
+
     it("should not embed an option non-empty list") {
       import CompoundParameter._
 
