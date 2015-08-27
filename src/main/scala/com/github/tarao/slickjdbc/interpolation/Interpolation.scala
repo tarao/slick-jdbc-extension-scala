@@ -37,7 +37,7 @@ class Placeholders(val value: Any, val topLevel: Boolean = true)
       case p: Product if p.productArity <= 0 =>
         throw new java.sql.SQLException("No value to bind for " + p)
       case p: Product => (p.productArity == 1, p.productIterator.map(rec))
-      case l: NonEmpty[_] => (false, l.map(rec))
+      case l: NonEmpty[_] => (false, l.toSeq.map(rec))
       case _ => (true, Iterator.single(new Placeholders(this, false) {
         override def toCompleteString: String = "?"
       }.toString) )
