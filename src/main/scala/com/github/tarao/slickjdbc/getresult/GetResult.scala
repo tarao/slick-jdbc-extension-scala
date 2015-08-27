@@ -181,6 +181,8 @@ object AutoUnwrapOption extends AutoUnwrapOption
 sealed trait NoOption[+T]
 object NoOption {
   implicit def some[T]: NoOption[T] = new NoOption[T] {}
+  // $COVERAGE-OFF$
   implicit def ambig1[T]: NoOption[Option[T]] = sys.error("unexpected")
   implicit def ambig2[T]: NoOption[Option[T]] = sys.error("unexpected")
+  // $COVERAGE-ON$
 }

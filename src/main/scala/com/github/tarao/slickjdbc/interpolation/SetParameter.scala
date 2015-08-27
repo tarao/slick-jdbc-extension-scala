@@ -67,10 +67,12 @@ object CheckNonEmpty {
 sealed trait NoOptionNonEmpty[-T]
 object NoOptionNonEmpty {
   implicit def valid[T]: NoOptionNonEmpty[T] = new NoOptionNonEmpty[T] {}
+  // $COVERAGE-OFF$
   implicit def ambig1[T]: NoOptionNonEmpty[Option[NonEmpty[T]]] =
     sys.error("unexpected")
   implicit def ambig2[T]: NoOptionNonEmpty[Option[NonEmpty[T]]] =
     sys.error("unexpected")
+  // $COVERAGE-ON$
 }
 
 @implicitNotFound(msg = "A maybe-non-empty list is passed.\n" +
@@ -86,8 +88,10 @@ object CheckOptionNonEmpty {
 sealed trait NoOption[-T]
 object NoOption {
   implicit def valid[T]: NoOption[T] = new NoOption[T] {}
+  // $COVERAGE-OFF$
   implicit def ambig1[S]: NoOption[Option[S]] = sys.error("unexpected")
   implicit def ambig2[S]: NoOption[Option[S]] = sys.error("unexpected")
+  // $COVERAGE-ON$
 }
 
 @implicitNotFound(msg = "Illegal parameter type: ${T}\n" +

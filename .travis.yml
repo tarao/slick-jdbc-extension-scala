@@ -1,8 +1,13 @@
 language: scala
 scala:
-  - 2.11.7
+- 2.11.7
 jdk:
-  - oraclejdk8
+- oraclejdk8
 sudo: false
 script:
-  - sbt test
+- sbt clean coverage test
+after_success:
+- sbt coveralls
+env:
+  global:
+    secure: HyBibyAO/aGynP136vU9Gg+WY++9F/nwGfKVBwJC6Uom5FpB/K/EPL1ZAC+LnwTqZq1rQVTKtq6VYxe1mllHks7dT5+6LX2rpAjpIwTt5KLVcHOkphkJ8cCS2ytvrZPSjmAfoJW7c/N5Jkw4ILFZiSqJDuJWIYfVhc8aUgXrCGo=
