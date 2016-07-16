@@ -22,7 +22,7 @@ Add dependency in your `build.sbt` as the following.
 ```scala
     libraryDependencies ++= Seq(
       ...
-      "com.github.tarao" %% "slick-jdbc-extension" % "0.0.4"
+      "com.github.tarao" %% "slick-jdbc-extension" % "0.0.5"
     )
 ```
 
