@@ -42,6 +42,8 @@ object GetResult {
     }) }
 }
 
+// $COVERAGE-OFF$
+
 @implicitNotFound(msg = "No conversion rule for type ${T}\n" +
   "[NOTE] You need an implicit of getresult.TypeBinder[${T}] to convert the result.")
 sealed trait CheckGetter[+T]
@@ -49,6 +51,8 @@ object CheckGetter {
   implicit def valid[T](implicit binder: TypeBinder[T]): CheckGetter[T] =
     new CheckGetter[T] {}
 }
+
+// $COVERAGE-ON$
 
 trait TypeBinder[+T] {
   def apply(rs: ResultSet, index: Int): T
@@ -178,11 +182,13 @@ trait AutoUnwrapOption {
 }
 object AutoUnwrapOption extends AutoUnwrapOption
 
+// $COVERAGE-OFF$
+
 sealed trait IsNotOption[+T]
 object IsNotOption {
   implicit def some[T]: IsNotOption[T] = new IsNotOption[T] {}
-  // $COVERAGE-OFF$
   implicit def ambig1[T]: IsNotOption[Option[T]] = sys.error("unexpected")
   implicit def ambig2[T]: IsNotOption[Option[T]] = sys.error("unexpected")
-  // $COVERAGE-ON$
 }
+
+// $COVERAGE-ON$

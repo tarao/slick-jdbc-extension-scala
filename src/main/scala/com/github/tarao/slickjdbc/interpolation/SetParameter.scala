@@ -34,6 +34,8 @@ class SetProduct[-T](implicit product: T <:< Product) extends SP[T] {
     }
 }
 
+// $COVERAGE-OFF$
+
 @implicitNotFound(msg = "Unsupported parameter type: ${T}.\n" +
   "[NOTE] You need an implicit of slick.jdbc.SetParameter[${T}] to pass a value of the type.")
 sealed trait CheckParameter[-T]
@@ -91,32 +93,26 @@ object CheckOption {
 sealed trait IsNotOptionNonEmpty[-T]
 object IsNotOptionNonEmpty {
   implicit def valid[T]: IsNotOptionNonEmpty[T] = new IsNotOptionNonEmpty[T] {}
-  // $COVERAGE-OFF$
   implicit def ambig1[T]: IsNotOptionNonEmpty[Option[NonEmpty[T]]] =
     sys.error("unexpected")
   implicit def ambig2[T]: IsNotOptionNonEmpty[Option[NonEmpty[T]]] =
     sys.error("unexpected")
-  // $COVERAGE-ON$
 }
 
 sealed trait IsNotOption[-T]
 object IsNotOption {
   implicit def valid[T]: IsNotOption[T] = new IsNotOption[T] {}
-  // $COVERAGE-OFF$
   implicit def ambig1[S]: IsNotOption[Option[S]] = sys.error("unexpected")
   implicit def ambig2[S]: IsNotOption[Option[S]] = sys.error("unexpected")
-  // $COVERAGE-ON$
 }
 
 sealed trait IsNotTuple[-T]
 object IsNotTuple {
   implicit def valid[T]: IsNotTuple[T] = new IsNotTuple[T] {}
-  // $COVERAGE-OFF$
   implicit def ambig1[S](implicit tp: IsTuple[S]): IsNotTuple[S] =
     sys.error("unexpected")
   implicit def ambig2[S](implicit tp: IsTuple[S]): IsNotTuple[S] =
     sys.error("unexpected")
-  // $COVERAGE-ON$
 }
 
 sealed trait IsTuple[-T]
@@ -164,3 +160,5 @@ object IsTuple {
   implicit def tuple22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22]: IsTuple[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)] =
     new IsTuple[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)] {}
 }
+
+// $COVERAGE-ON$
