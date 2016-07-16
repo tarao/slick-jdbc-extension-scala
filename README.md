@@ -322,7 +322,7 @@ an object.
 
 You can use this feature without the extended SQL interpolation.
 
-### Mapping culomns by name
+### Mapping columns by name
 
 As you have already seen, a column value can be extracted by `column`
 method.  If you want to explicitly specify a return type or the return
