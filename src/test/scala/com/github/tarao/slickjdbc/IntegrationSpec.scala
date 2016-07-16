@@ -4,15 +4,24 @@ package slickjdbc
 import helper.{UnitSpec, TestDB, Repository}
 import interpolation.{SQLInterpolation, CompoundParameter, TableName}
 import getresult.{GetResult, AutoUnwrapOption, TypeBinder}
+import util.NonEmpty
+import slick.jdbc.{SetParameter => SP, PositionedParameters}
 
 case class URL(url: String)
 case class Entry(id: Long, url: URL)
+
+class MyURL(val url: String)
 
 /** A sample repository trait */
 trait EntryRepository extends Repository
     with SQLInterpolation with CompoundParameter
     with GetResult with AutoUnwrapOption {
-  import util.NonEmpty
+
+  implicit object SetMyURL extends SP[MyURL] {
+    def apply(v: MyURL, pp: PositionedParameters): Unit = {
+      pp.setString(v.url)
+    }
+  }
 
   implicit val getEntryResult = getResult { Entry(
     column("entry_id"),
@@ -50,6 +59,14 @@ trait EntryRepository extends Repository
   }
 
   def add2(entries: Option[NonEmpty[(Long, URL)]]) = entries match {
+    case Some(entries) => db.run { sqlu"""
+    | INSERT INTO ${table} (entry_id, url)
+    | VALUES $entries
+    """ }
+    case None => ()
+  }
+
+  def add3(entries: Option[NonEmpty[(Long, MyURL)]]) = entries match {
     case Some(entries) => db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES $entries
@@ -157,6 +174,12 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
 
       val result2 = findByUrls(entries2.map(_.url).toSeq)
       result2 should be (entries2)
+
+      val entries3 = Iterator.continually{ freshEntry }.take(10).toSeq
+      add3(entries3.map{ e => (e.id, new MyURL(e.url.url)) })
+
+      val result3 = findByUrls(entries3.map(_.url).toSeq)
+      result3 should be (entries3)
     }
   }
 }

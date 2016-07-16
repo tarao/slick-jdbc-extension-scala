@@ -42,6 +42,8 @@ object GetResult {
     }) }
 }
 
+// $COVERAGE-OFF$
+
 @implicitNotFound(msg = "No conversion rule for type ${T}\n" +
   "[NOTE] You need an implicit of getresult.TypeBinder[${T}] to convert the result.")
 sealed trait CheckGetter[+T]
@@ -49,6 +51,8 @@ object CheckGetter {
   implicit def valid[T](implicit binder: TypeBinder[T]): CheckGetter[T] =
     new CheckGetter[T] {}
 }
+
+// $COVERAGE-ON$
 
 trait TypeBinder[+T] {
   def apply(rs: ResultSet, index: Int): T
@@ -169,20 +173,22 @@ object TypeBinder {
 
 trait AutoUnwrapOption {
   implicit def some[T](implicit
-    check: NoOption[T], // We do this to enable a diagnostic type
-                        // error by CheckGetter.  Otherwise an
-                        // implicit expansion of an unknown type fails
-                        // on divergence.
+    check: IsNotOption[T], // We do this to enable a diagnostic type
+                           // error by CheckGetter.  Otherwise an
+                           // implicit expansion of an unknown type
+                           // fails on divergence.
     option: TypeBinder[Option[T]]
   ): TypeBinder[T] = option.map(_.get) // throws
 }
 object AutoUnwrapOption extends AutoUnwrapOption
 
-sealed trait NoOption[+T]
-object NoOption {
-  implicit def some[T]: NoOption[T] = new NoOption[T] {}
-  // $COVERAGE-OFF$
-  implicit def ambig1[T]: NoOption[Option[T]] = sys.error("unexpected")
-  implicit def ambig2[T]: NoOption[Option[T]] = sys.error("unexpected")
-  // $COVERAGE-ON$
+// $COVERAGE-OFF$
+
+sealed trait IsNotOption[+T]
+object IsNotOption {
+  implicit def some[T]: IsNotOption[T] = new IsNotOption[T] {}
+  implicit def ambig1[T]: IsNotOption[Option[T]] = sys.error("unexpected")
+  implicit def ambig2[T]: IsNotOption[Option[T]] = sys.error("unexpected")
 }
+
+// $COVERAGE-ON$
