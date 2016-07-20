@@ -838,10 +838,28 @@ class InterpolationSpec extends UnitSpec
 
 class CompoundParameterSpec extends UnitSpec
     with TraitSingletonBehavior {
-  describe("object CompoundParameter") {
+  describe("object ListParameter") {
     it("should inherit the trait") {
       it should behave like exportingTheTraitMethods
-        [CompoundParameter](CompoundParameter)
+        [ListParameter](ListParameter)
+    }
+  }
+
+  describe("object ProductParameter") {
+    it("should inherit the trait") {
+      it should behave like exportingTheTraitMethods
+        [ProductParameter](ProductParameter)
+    }
+  }
+
+  describe("object CompoundParameter") {
+    it("should inherit the trait") {
+      val compoundParameter = new CompoundParameter {}
+      compoundParameter shouldBe a[ListParameter]
+      compoundParameter shouldBe a[ProductParameter]
+
+      CompoundParameter shouldBe a[ListParameter]
+      CompoundParameter shouldBe a[ProductParameter]
     }
   }
 }

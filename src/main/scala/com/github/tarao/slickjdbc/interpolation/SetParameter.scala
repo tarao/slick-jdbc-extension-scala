@@ -6,25 +6,31 @@ import util.NonEmpty
 import scala.annotation.implicitNotFound
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
 
-trait CompoundParameter {
-  @inline implicit def createSetProduct[T](implicit
-    check1: T <:< Product,
-    check2: IsNotTuple[T]
-  ): SP[T] = new SetProduct[T]
-
+trait ListParameter {
   @inline implicit def createSetList[T](implicit
     c: SP[T]
   ): SP[NonEmpty[T]] = new SetList[T, NonEmpty[T]](c)
-
-  @inline implicit def productToPlaceholder[T](implicit
-    check1: T <:< Product,
-    check2: IsNotTuple[T]
-  ): ToPlaceholder[T] = new ToPlaceholder.FromProduct[T]
 
   @inline implicit def listToPlaceholder[T](implicit
     p: ToPlaceholder[T]
   ): ToPlaceholder[NonEmpty[T]] = new ToPlaceholder.FromList[T, NonEmpty[T]](p)
 }
+object ListParameter extends ListParameter
+
+trait ProductParameter {
+  @inline implicit def createSetProduct[T](implicit
+    check1: T <:< Product,
+    check2: IsNotTuple[T]
+  ): SP[T] = new SetProduct[T]
+
+  @inline implicit def productToPlaceholder[T](implicit
+    check1: T <:< Product,
+    check2: IsNotTuple[T]
+  ): ToPlaceholder[T] = new ToPlaceholder.FromProduct[T]
+}
+object ProductParameter extends ProductParameter
+
+trait CompoundParameter extends ListParameter with ProductParameter
 object CompoundParameter extends CompoundParameter
 
 /** SetParameter for non-empty list types. */
