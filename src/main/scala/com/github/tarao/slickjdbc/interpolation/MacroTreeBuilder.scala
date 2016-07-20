@@ -42,6 +42,10 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     tq"""$interpolation.${TypeName("CheckOption")}"""
   private def checkParameter(required: Type, base: Tree = CheckParameter) =
     q"implicitly[$base[$required]]"
+  private val ToPlaceholder =
+    tq"""$interpolation.${TypeName("ToPlaceholder")}"""
+  private def toPlaceholder(target: Type, base: Tree = ToPlaceholder) =
+    q"implicitly[$base[$target]]"
   private val Translators =
     tq"Traversable[$NS.query.Translator]"
 
@@ -119,7 +123,11 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
 
         mayCompleteParen(param, s) {
           // for "?, ?, ?, ..."
-          params.append(c.Expr(q"new $interpolation.Placeholders(${param})"))
+          params.append(c.Expr(q"""
+            ${toPlaceholder(param.actualType)}
+              .apply(${param})
+              .toTopLevelString
+          """))
           queryParts.append(q""" ${"#"} """)
           // for the last "?" (inserted by ActionBasedSQLInterpolation)
           params.append(param)
