@@ -10,7 +10,7 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
   import c.universe._
   import scala.collection.mutable.ListBuffer
   import slick.jdbc.SQLActionBuilder
-  import slick.profile.SqlAction
+  import slick.sql.SqlAction
   import slick.dbio.{NoStream, Effect}
 
   def abort(msg: String) = c.abort(c.enclosingPosition, msg)
