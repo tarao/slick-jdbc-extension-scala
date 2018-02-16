@@ -6,11 +6,11 @@ trait TraitSingletonBehavior { self: UnitSpec =>
   import scala.reflect.Manifest
   import java.lang.Class
 
-  def signatures[T](clazz: Class[T]): String =
+  def signatures[T](clazz: Class[T]): Set[String] =
     clazz.getDeclaredMethods.map { x =>
       x.getReturnType + " " + x.getName +
         "(" + x.getParameterTypes.mkString(", ") + ")"
-    }.sorted.mkString("\n")
+    }.toSet
 
   /**
     Check a singleton object to export methods in a trait.  The object
@@ -21,6 +21,6 @@ trait TraitSingletonBehavior { self: UnitSpec =>
   def exportingTheTraitMethods[T : Manifest](singleton: Any) {
     singleton shouldBe a [T]
     val parent = implicitly[Manifest[T]].runtimeClass.asInstanceOf[Class[T]]
-    signatures(singleton.getClass) should equal (signatures(parent))
+    signatures(singleton.getClass) subsetOf (signatures(parent)) shouldBe true
   }
 }
