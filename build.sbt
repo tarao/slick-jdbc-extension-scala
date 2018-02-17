@@ -5,7 +5,7 @@ lazy val slickjdbcextension = (project in file(".")).
   settings(
     name := "slick-jdbc-extension",
     organization := "com.github.tarao",
-    version := "0.0.7",
+    version := "0.0.8",
     scalaVersion := "2.11.11",
     crossScalaVersions := Seq("2.11.11", "2.12.3"),
 
