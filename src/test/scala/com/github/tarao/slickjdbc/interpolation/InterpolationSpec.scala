@@ -5,7 +5,7 @@ package interpolation
 import util.NonEmpty
 import helper.{UnitSpec, TraitSingletonBehavior}
 import slick.jdbc.SQLActionBuilder
-import slick.profile.SqlAction
+import slick.sql.SqlAction
 import slick.dbio.{NoStream, Effect}
 
 case class EmptyTuple()

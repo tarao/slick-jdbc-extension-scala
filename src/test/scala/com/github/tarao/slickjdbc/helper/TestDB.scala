@@ -5,7 +5,7 @@ package helper
 import scala.language.implicitConversions
 import scala.concurrent.duration.Duration
 import org.scalatest.{FunSpec, BeforeAndAfterAll, BeforeAndAfterEach}
-import slick.driver.H2Driver.api.Database
+import slick.jdbc.H2Profile.api.Database
 
 case class Timeout(duration: Duration)
 object Timeout {

@@ -6,15 +6,16 @@ lazy val slickjdbcextension = (project in file(".")).
     name := "slick-jdbc-extension",
     organization := "com.github.tarao",
     version := "0.0.7",
-    scalaVersion := "2.11.8",
+    scalaVersion := "2.11.11",
+    crossScalaVersions := Seq("2.11.11", "2.12.3"),
 
     // Depenency
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "com.typesafe.slick" %% "slick" % "3.1.1",
-      "com.github.tarao" %% "nonempty" % "0.0.6",
-      "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-      "org.scalamock" %% "scalamock-scalatest-support" % "3.2.2" % "test",
+      "com.typesafe.slick" %% "slick" % "3.2.1",
+      "com.github.tarao" %% "nonempty" % "0.0.7",
+      "org.scalatest" %% "scalatest" % "3.0.5" % "test",
+      "org.scalamock" %% "scalamock" % "4.0.0" % "test",
       "com.h2database" % "h2" % "1.4.191" % "test"
     ),
 

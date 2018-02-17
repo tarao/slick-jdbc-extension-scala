@@ -9,7 +9,7 @@ class ContextSpec extends UnitSpec {
     it("should return a caller") {
       val context = new Context {}
       context.caller.toString should fullyMatch regex (
-        "com[.]github[.]tarao[.]slickjdbc[.]query[.]ContextSpec[$].*[(]TranslatorSpec[.]scala:[0-9]+[)]"
+        "com[.]github[.]tarao[.]slickjdbc[.]query[.]ContextSpec.*[(]TranslatorSpec[.]scala:[0-9]+[)]"
       )
     }
   }
@@ -47,7 +47,7 @@ class CallerCommenterSpec extends UnitSpec {
     it("should embed a caller information as a comment") {
       implicit val translators : Traversable[Translator] = Seq(CallerCommenter)
       val query = Translator.translate("SELECT * FROM entry LIMIT 1")
-      val caller = "com[.]github[.]tarao[.]slickjdbc[.]query[.]CallerCommenterSpec[$].*[(]TranslatorSpec[.]scala:[0-9]+[)]"
+      val caller = "com[.]github[.]tarao[.]slickjdbc[.]query[.]CallerCommenterSpec.*[(]TranslatorSpec[.]scala:[0-9]+[)]"
       query should fullyMatch regex (
         s"SELECT /[*] $caller [*]/ [*] FROM entry LIMIT 1"
       )
