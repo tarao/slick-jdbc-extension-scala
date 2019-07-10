@@ -29,7 +29,7 @@ object ToPlaceholder {
   class FromList[S, -T <: NonEmpty[S]](p: ToPlaceholder[S])
       extends ToPlaceholder[T] {
     def apply(value: T): Placeholder =
-      Placeholder.Nested(value.map(p.apply _).toSeq: _*)
+      Placeholder.Nested(value.map(p.apply _).toList: _*)
   }
 
   class FromTuple[-T <: Product](children: ToPlaceholder[_]*)

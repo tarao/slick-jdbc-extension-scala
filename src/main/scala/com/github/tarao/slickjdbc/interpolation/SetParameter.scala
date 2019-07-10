@@ -36,7 +36,7 @@ object CompoundParameter extends CompoundParameter
 /** SetParameter for non-empty list types. */
 class SetList[S, -T <: NonEmpty[S]](val c: SP[S]) extends SP[T] {
   def apply(param: T, pp: PositionedParameters): Unit = {
-    param.foreach { item => c.asInstanceOf[SP[Any]](item, pp) }
+    param.map { item => c.asInstanceOf[SP[Any]](item, pp) }
   }
 }
 

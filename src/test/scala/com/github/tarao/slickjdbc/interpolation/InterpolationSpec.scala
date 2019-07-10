@@ -15,6 +15,9 @@ case class Triple[S, T, U](left: S, middle: T, right: U)
 
 class InterpolationSpec extends UnitSpec
     with TraitSingletonBehavior {
+
+
+
   def canonicalQuery(query: String) =
     query.replaceAll("[\r\n\t ]+", " ").trim
 

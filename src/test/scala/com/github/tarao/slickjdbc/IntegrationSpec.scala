@@ -5,6 +5,7 @@ import helper.{UnitSpec, TestDB, Repository}
 import interpolation.{SQLInterpolation, CompoundParameter, TableName}
 import getresult.{GetResult, AutoUnwrapOption, TypeBinder}
 import util.NonEmpty
+import util.NonEmpty.fromTraversable
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
 
 case class URL(url: String)
