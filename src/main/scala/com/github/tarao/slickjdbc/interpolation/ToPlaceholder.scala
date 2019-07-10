@@ -14,6 +14,8 @@ object ToPlaceholder {
       def rec(v: Any): Placeholder = v match {
         case s: Tuple1[_] =>
           Placeholder.Nested(1)
+        case ne: NonEmpty[_] =>
+          Placeholder()
         case p: Product if p.productArity <= 0 =>
           throw new java.sql.SQLException("No value to bind for " + p)
         case p: Product if p.productArity == 1 =>
