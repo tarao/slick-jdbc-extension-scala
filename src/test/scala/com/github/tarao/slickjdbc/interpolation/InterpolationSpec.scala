@@ -2,7 +2,6 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
-import util.NonEmpty
 import helper.{UnitSpec, TraitSingletonBehavior}
 import slick.jdbc.SQLActionBuilder
 import slick.sql.SqlAction
@@ -114,7 +113,18 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should not embed a non-empty list") {
-      val entryIds = NonEmpty(1, 2, 3, 4)
+      val entryIds = util.NonEmpty(1, 2, 3, 4)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
+      """)
+    }
+
+    it("should not embed a refined non-empty list") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      val Right(entryIds) = refineV[NonEmpty](Seq(1, 2, 3, 4))
 
       assertTypeError("""
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
@@ -124,7 +134,7 @@ class InterpolationSpec extends UnitSpec
     it("should embed a non-empty list if it is explicitly enabled") {
       import CompoundParameter._
 
-      val entryIds = NonEmpty(1, 2, 3, 4)
+      val entryIds = util.NonEmpty(1, 2, 3, 4)
 
       it should behave like anIdenticalQuery {
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
@@ -135,18 +145,61 @@ class InterpolationSpec extends UnitSpec
       }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
 
       it should behave like anIdenticalQuery {
-        sql"SELECT * FROM entry WHERE entry_id IN (${NonEmpty(5)})"
+        sql"SELECT * FROM entry WHERE entry_id IN (${util.NonEmpty(5)})"
       }("SELECT * FROM entry WHERE entry_id IN (?)")
 
       it should behave like anIdenticalQuery {
-        sql"SELECT * FROM entry WHERE entry_id IN ${NonEmpty(5)}"
+        sql"SELECT * FROM entry WHERE entry_id IN ${util.NonEmpty(5)}"
+      }("SELECT * FROM entry WHERE entry_id IN (?)")
+    }
+
+    it("should embed a refined non-empty list if it is explicitly enabled") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      val Right(entryIds) = refineV[NonEmpty](Seq(1, 2, 3, 4))
+      val Right(entryIds1) = refineV[NonEmpty](Seq(5))
+
+      import CompoundParameter._
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $entryIds"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN (${entryIds1})"
+      }("SELECT * FROM entry WHERE entry_id IN (?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ${entryIds1}"
       }("SELECT * FROM entry WHERE entry_id IN (?)")
     }
 
     it("should embed a non-empty set if it is explicitly enabled") {
       import CompoundParameter._
 
-      val entryIds = NonEmpty.fromTraversable(Set(1, 2, 3, 4)).get
+      val entryIds = util.NonEmpty.fromTraversable(Set(1, 2, 3, 4)).get
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $entryIds"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+    }
+
+    it("should embed a refined non-empty set if it is explicitly enabled") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      val Right(entryIds) = refineV[NonEmpty](Set(1, 2, 3, 4))
+
+      import CompoundParameter._
 
       it should behave like anIdenticalQuery {
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
@@ -158,9 +211,12 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should not embed an option non-empty list") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
       import CompoundParameter._
 
-      val entryIds = Option(NonEmpty(1, 2, 3, 4))
+      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).toOption
 
       assertTypeError("""
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
@@ -169,6 +225,18 @@ class InterpolationSpec extends UnitSpec
       it should behave like anIdenticalQuery {
         sql"SELECT * FROM entry WHERE entry_id IN (${entryIds.get})"
       }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
+    }
+
+    it("should not embed a refined option non-empty list") {
+      import CompoundParameter._
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).toOption
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
+      """)
     }
 
     it("should not embed a maybe-empty list") {
@@ -276,7 +344,7 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should not embed a non-empty list of product") {
-      val params = NonEmpty(
+      val params = util.NonEmpty(
         Single("http://example.com/1"),
         Single("http://example.com/2"),
         Single("http://example.com/3")
@@ -287,9 +355,24 @@ class InterpolationSpec extends UnitSpec
       """)
     }
 
+    it("should not embed a refined non-empty list of product") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      val Right(params) = refineV[NonEmpty](Seq(
+        Single("http://example.com/1"),
+        Single("http://example.com/2"),
+        Single("http://example.com/3")
+      ))
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE entry_id IN ($params)"
+      """)
+    }
+
     it("should embed a non-empty list of product if it is explicitly enabled") {
       // This works as if Single[Int] is an alias of Int
-      val params = NonEmpty(
+      val params = util.NonEmpty(
         Single(1),
         Single(2),
         Single(3)
@@ -306,9 +389,66 @@ class InterpolationSpec extends UnitSpec
       }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
     }
 
+    it("should embed a refined non-empty list of product if it is explicitly enabled") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      // This works as if Single[Int] is an alias of Int
+      val Right(params) = refineV[NonEmpty](Seq(
+        Single(1),
+        Single(2),
+        Single(3)
+      ))
+
+      import CompoundParameter._
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN ($params)"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
+
+      it should behave like anIdenticalQuery {
+        sql"SELECT * FROM entry WHERE entry_id IN $params"
+      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
+    }
+
     it("should not embed an option value") {
       val param = Option(3)
-      val params = NonEmpty(Option(3))
+      val params = util.NonEmpty(Option(3))
+      val tuple = (Option(3), 2, 1)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE param = $param"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE params IN ($params)"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE params IN ($tuple)"
+      """)
+
+      import CompoundParameter._
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE param = $param"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE params IN ($params)"
+      """)
+
+      assertTypeError("""
+        sql"SELECT * FROM entry WHERE params IN ($tuple)"
+      """)
+    }
+
+    it("should not embed a refined option value") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      val param = Option(3)
+      val Right(params) = refineV[NonEmpty](Seq(Option(3)))
       val tuple = (Option(3), 2, 1)
 
       assertTypeError("""
@@ -465,7 +605,18 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should not embed a non-empty list") {
-      val entryIds = NonEmpty(1, 2, 3, 4)
+      val entryIds = util.NonEmpty(1, 2, 3, 4)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
+      """)
+    }
+
+    it("should not embed a refined non-empty list") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      val Right(entryIds) = refineV[NonEmpty](Seq(1, 2, 3, 4))
 
       assertTypeError("""
         sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
@@ -475,7 +626,7 @@ class InterpolationSpec extends UnitSpec
     it("should embed a non-empty list if it is explicitly enabled") {
       import CompoundParameter._
 
-      val entryIds = NonEmpty(1, 2, 3, 4)
+      val entryIds = util.NonEmpty(1, 2, 3, 4)
 
       it should behave like anIdenticalStatement {
         sqlu"""
@@ -497,7 +648,7 @@ class InterpolationSpec extends UnitSpec
         sqlu"""
           UPDATE entry
           SET flag = 1
-          WHERE entry_id IN (${NonEmpty(5)})
+          WHERE entry_id IN (${util.NonEmpty(5)})
         """
       }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
 
@@ -505,7 +656,49 @@ class InterpolationSpec extends UnitSpec
         sqlu"""
           UPDATE entry
           SET flag = 1
-          WHERE entry_id IN ${NonEmpty(5)}
+          WHERE entry_id IN ${util.NonEmpty(5)}
+        """
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
+    }
+
+    it("should embed a refined non-empty list if it is explicitly enabled") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      import CompoundParameter._
+
+      val Right(entryIds) = refineV[NonEmpty](Seq(1, 2, 3, 4))
+      val Right(entryIds1) = refineV[NonEmpty](Seq(5))
+
+      it should behave like anIdenticalStatement {
+        sqlu"""
+          UPDATE entry
+          SET flag = 1
+          WHERE entry_id IN ($entryIds)
+        """
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"""
+          UPDATE entry
+          SET flag = 1
+          WHERE entry_id IN $entryIds
+        """
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"""
+          UPDATE entry
+          SET flag = 1
+          WHERE entry_id IN (${entryIds1})
+        """
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"""
+          UPDATE entry
+          SET flag = 1
+          WHERE entry_id IN ${entryIds1}
         """
       }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
     }
@@ -513,7 +706,7 @@ class InterpolationSpec extends UnitSpec
     it("should not embed an option non-empty list") {
       import CompoundParameter._
 
-      val entryIds = Option(NonEmpty(1, 2, 3, 4))
+      val entryIds = Option(util.NonEmpty(1, 2, 3, 4))
 
       assertTypeError("""
         sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
@@ -526,6 +719,40 @@ class InterpolationSpec extends UnitSpec
           WHERE entry_id IN (${entryIds.get})
         """
       }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
+    }
+
+    it("should not embed an option refined non-empty list") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      import CompoundParameter._
+
+      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).toOption
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
+      """)
+
+      it should behave like anIdenticalStatement {
+        sqlu"""
+          UPDATE entry
+          SET flag = 1
+          WHERE entry_id IN (${entryIds.get})
+        """
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
+    }
+
+    it("should not embed an either refined non-empty list") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      import CompoundParameter._
+
+      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4))
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
+      """)
     }
 
     it("should not embed a maybe-empty list") {
@@ -641,25 +868,25 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should not embed a non-empty list of product") {
-      val params1 = NonEmpty(
+      val params1 = util.NonEmpty(
         (1, "http://example.com/1"),
         (2, "http://example.com/2"),
         (3, "http://example.com/3")
       )
 
-      val params2 = NonEmpty(
+      val params2 = util.NonEmpty(
         Tuple1("http://example.com/1"),
         Tuple1("http://example.com/2"),
         Tuple1("http://example.com/3")
       )
 
-      val params3 = NonEmpty(
+      val params3 = util.NonEmpty(
         Single("http://example.com/1"),
         Single("http://example.com/2"),
         Single("http://example.com/3")
       )
 
-      val params4 = NonEmpty(
+      val params4 = util.NonEmpty(
         Double(1, "http://example.com/1"),
         Double(2, "http://example.com/2"),
         Double(3, "http://example.com/3")
@@ -682,27 +909,72 @@ class InterpolationSpec extends UnitSpec
       """)
     }
 
+    it("should not embed a refined non-empty list of product") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      val Right(params1) = refineV[NonEmpty](Seq(
+        (1, "http://example.com/1"),
+        (2, "http://example.com/2"),
+        (3, "http://example.com/3")
+      ))
+
+      val Right(params2) = refineV[NonEmpty](Seq(
+        Tuple1("http://example.com/1"),
+        Tuple1("http://example.com/2"),
+        Tuple1("http://example.com/3")
+      ))
+
+      val Right(params3) = refineV[NonEmpty](Seq(
+        Single("http://example.com/1"),
+        Single("http://example.com/2"),
+        Single("http://example.com/3")
+      ))
+
+      val Right(params4) = refineV[NonEmpty](Seq(
+        Double(1, "http://example.com/1"),
+        Double(2, "http://example.com/2"),
+        Double(3, "http://example.com/3")
+      ))
+
+      assertTypeError("""
+        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params1)"
+      """)
+
+      assertTypeError("""
+        sqlu"INSERT INTO entry (url) VALUES ($params2)"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($params3)"
+      """)
+
+      assertTypeError("""
+        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params4)"
+      """)
+    }
+
     it("should embed a non-empty list of product if it is explicitly enabled") {
-      val params1 = NonEmpty(
+      val params1 = util.NonEmpty(
         (1, "http://example.com/1"),
         (2, "http://example.com/2"),
         (3, "http://example.com/3")
       )
 
-      val params2 = NonEmpty(
+      val params2 = util.NonEmpty(
         Tuple1("http://example.com/1"),
         Tuple1("http://example.com/2"),
         Tuple1("http://example.com/3")
       )
 
       // This works as if Single[String] is an alias of String
-      val params3 = NonEmpty(
+      val params3 = util.NonEmpty(
         Single("http://example.com/1"),
         Single("http://example.com/2"),
         Single("http://example.com/3")
       )
 
-      val params4 = NonEmpty(
+      val params4 = util.NonEmpty(
         Double(1, "http://example.com/1"),
         Double(2, "http://example.com/2"),
         Double(3, "http://example.com/3")
@@ -743,9 +1015,108 @@ class InterpolationSpec extends UnitSpec
       }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
     }
 
+    it("should embed a refined non-empty list of product if it is explicitly enabled") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      val Right(params1) = refineV[NonEmpty](Seq(
+        (1, "http://example.com/1"),
+        (2, "http://example.com/2"),
+        (3, "http://example.com/3")
+      ))
+
+      val Right(params2) = refineV[NonEmpty](Seq(
+        Tuple1("http://example.com/1"),
+        Tuple1("http://example.com/2"),
+        Tuple1("http://example.com/3")
+      ))
+
+      // This works as if Single[String] is an alias of String
+      val Right(params3) = refineV[NonEmpty](Seq(
+        Single("http://example.com/1"),
+        Single("http://example.com/2"),
+        Single("http://example.com/3")
+      ))
+
+      val Right(params4) = refineV[NonEmpty](Seq(
+        Double(1, "http://example.com/1"),
+        Double(2, "http://example.com/2"),
+        Double(3, "http://example.com/3")
+      ))
+
+      import CompoundParameter._
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params1)"
+      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (entry_id, url) VALUES $params1"
+      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (url) VALUES ($params2)"
+      }("INSERT INTO entry (url) VALUES (?), (?), (?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (url) VALUES $params2"
+      }("INSERT INTO entry (url) VALUES (?), (?), (?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($params3)"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN $params3"
+      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params4)"
+      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
+
+      it should behave like anIdenticalStatement {
+        sqlu"INSERT INTO entry (entry_id, url) VALUES $params4"
+      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
+    }
+
     it("should not embed an option value") {
       val param = Option(3)
-      val params = NonEmpty(Option(3))
+      val params = util.NonEmpty(Option(3))
+      val tuple = (Option(3), 2, 1)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE param = $param"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($params)"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($tuple)"
+      """)
+
+      import CompoundParameter._
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE param = $param"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($params)"
+      """)
+
+      assertTypeError("""
+        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($tuple)"
+      """)
+    }
+
+    it("should not embed a refined option value") {
+      import eu.timepit.refined.collection.NonEmpty
+      import eu.timepit.refined.refineV
+
+      val param = Option(3)
+      val Right(params) = refineV[NonEmpty](Seq(Option(3)))
       val tuple = (Option(3), 2, 1)
 
       assertTypeError("""

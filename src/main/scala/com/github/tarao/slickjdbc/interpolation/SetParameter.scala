@@ -2,30 +2,45 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
-import util.NonEmpty
+import eu.timepit.refined
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.auto.autoUnwrap
+import eu.timepit.refined.collection.NonEmpty
 import scala.annotation.implicitNotFound
+import scala.language.higherKinds
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
 
 trait ListParameter {
   @inline implicit def createSetList[T](implicit
     c: SP[T]
-  ): SP[NonEmpty[T]] = new SetList[T, NonEmpty[T]](c)
+  ): SP[util.NonEmpty[T]] = new SetList[T, util.NonEmpty[T]](c)
+
+  @inline implicit def createSetNonEmptyList[A, L[X] <: Traversable[X]](implicit
+    c: SP[A]
+  ): SP[L[A] Refined NonEmpty] =
+    new SetNonEmptyList[A, L, L[A] Refined NonEmpty](c)
 
   @inline implicit def listToPlaceholder[T](implicit
     p: ToPlaceholder[T]
-  ): ToPlaceholder[NonEmpty[T]] = new ToPlaceholder.FromList[T, NonEmpty[T]](p)
+  ): ToPlaceholder[util.NonEmpty[T]] =
+    new ToPlaceholder.FromList[T, util.NonEmpty[T]](p)
+
+  @inline implicit def nonEmptyListToPlaceholder[A, L[X] <: Traversable[X]](implicit
+    p: ToPlaceholder[A]
+  ): ToPlaceholder[L[A] Refined NonEmpty] =
+    new ToPlaceholder.FromNonEmptyList[A, L, L[A] Refined NonEmpty](p)
 }
 object ListParameter extends ListParameter
 
 trait ProductParameter {
   @inline implicit def createSetProduct[T](implicit
     check1: T <:< Product,
-    check2: IsNotTuple[T]
+    check2: IsNotTuple[T],
   ): SP[T] = new SetProduct[T]
 
   @inline implicit def productToPlaceholder[T](implicit
     check1: T <:< Product,
-    check2: IsNotTuple[T]
+    check2: IsNotTuple[T],
   ): ToPlaceholder[T] = new ToPlaceholder.FromProduct[T]
 }
 object ProductParameter extends ProductParameter
@@ -34,9 +49,16 @@ trait CompoundParameter extends ListParameter with ProductParameter
 object CompoundParameter extends CompoundParameter
 
 /** SetParameter for non-empty list types. */
-class SetList[S, -T <: NonEmpty[S]](val c: SP[S]) extends SP[T] {
+class SetList[S, -T <: util.NonEmpty[S]](val c: SP[S]) extends SP[T] {
   def apply(param: T, pp: PositionedParameters): Unit = {
     param.foreach { item => c.asInstanceOf[SP[Any]](item, pp) }
+  }
+}
+
+/** SetParameter for non-empty list types. */
+class SetNonEmptyList[A, L[X] <: Traversable[X], -T <: L[A] Refined NonEmpty](val c: SP[A]) extends SP[T] {
+  def apply(param: T, pp: PositionedParameters): Unit = {
+    param.foreach(item => c.asInstanceOf[SP[Any]](item, pp))
   }
 }
 
@@ -69,7 +91,7 @@ object CheckProduct {
 
 @implicitNotFound(msg = "Illegal parameter type: ${T}.\n" +
   "[NOTE] A list is not allowed since it may be empty and breaks the query.\n" +
-  "[NOTE] Pass a util.NonEmpty[] if you know that it is not empty.")
+  "[NOTE] Pass a ${T} Refind NonEmpty if you know that it is not empty.")
 sealed trait CheckList[-T]
 object CheckList {
   implicit def valid[T](implicit c: SP[T]): CheckList[T] =
@@ -105,12 +127,22 @@ object CheckOption {
   ): CheckOption[T] = new CheckOption[T] {}
 }
 
+@implicitNotFound(msg = "Illegal parameter type: ${T}\n" +
+  "[NOTE] Break it into Left(_) or Right(_) to confirm that it can be embedded into the query.")
+sealed trait CheckEither[-T]
+object CheckEither {
+  implicit def valid[T](implicit
+    check: IsNotEither[T],
+    c: SP[T]
+  ): CheckEither[T] = new CheckEither[T] {}
+}
+
 sealed trait IsNotOptionNonEmpty[-T]
 object IsNotOptionNonEmpty {
   implicit def valid[T]: IsNotOptionNonEmpty[T] = new IsNotOptionNonEmpty[T] {}
-  implicit def ambig1[T]: IsNotOptionNonEmpty[Option[NonEmpty[T]]] =
+  implicit def ambig1[T]: IsNotOptionNonEmpty[Option[util.NonEmpty[T]]] =
     sys.error("unexpected")
-  implicit def ambig2[T]: IsNotOptionNonEmpty[Option[NonEmpty[T]]] =
+  implicit def ambig2[T]: IsNotOptionNonEmpty[Option[util.NonEmpty[T]]] =
     sys.error("unexpected")
 }
 
@@ -127,6 +159,15 @@ object IsNotTuple {
   implicit def ambig1[S](implicit tp: IsTuple[S]): IsNotTuple[S] =
     sys.error("unexpected")
   implicit def ambig2[S](implicit tp: IsTuple[S]): IsNotTuple[S] =
+    sys.error("unexpected")
+}
+
+sealed trait IsNotEither[-T]
+object IsNotEither {
+  implicit def valid[T]: IsNotEither[T] = new IsNotEither[T] {}
+  implicit def ambig1[S](implicit either: S <:< Either[_, _]): IsNotEither[S] =
+    sys.error("unexpected")
+  implicit def ambig2[S](implicit either: S <:< Either[_, _]): IsNotEither[S] =
     sys.error("unexpected")
 }
 

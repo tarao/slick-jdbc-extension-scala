@@ -1,10 +1,13 @@
 package com.github.tarao
 package slickjdbc
 
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.auto.autoUnwrap
+import eu.timepit.refined.collection.NonEmpty
+import eu.timepit.refined.refineV
 import helper.{UnitSpec, TestDB, Repository}
 import interpolation.{SQLInterpolation, CompoundParameter, TableName}
 import getresult.{GetResult, AutoUnwrapOption, TypeBinder}
-import util.NonEmpty
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
 
 case class URL(url: String)
@@ -40,17 +43,33 @@ trait EntryRepository extends Repository
     db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES (${entry.id}, ${entry.url})
-    """
-  }
+    """ }
 
   def add2(entry: Entry) =
     db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES ${(entry.id, entry.url)}
-    """
-  }
+    """ }
 
-  def add1(entries: Option[NonEmpty[Entry]]) = entries match {
+  def add1(entries: Seq[Entry] Refined NonEmpty) =
+    db.run { sqlu"""
+    | INSERT INTO ${table} (entry_id, url)
+    | VALUES $entries
+    """ }
+
+  def add2(entries: Seq[(Long, URL)] Refined NonEmpty) =
+    db.run { sqlu"""
+    | INSERT INTO ${table} (entry_id, url)
+    | VALUES $entries
+    """ }
+
+  def add3(entries: Seq[(Long, MyURL)] Refined NonEmpty) =
+    db.run { sqlu"""
+    | INSERT INTO ${table} (entry_id, url)
+    | VALUES $entries
+    """ }
+
+  def add4(entries: Option[util.NonEmpty[Entry]]) = entries match {
     case Some(entries) => db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES $entries
@@ -58,7 +77,7 @@ trait EntryRepository extends Repository
     case None => ()
   }
 
-  def add2(entries: Option[NonEmpty[(Long, URL)]]) = entries match {
+  def add5(entries: Option[util.NonEmpty[(Long, URL)]]) = entries match {
     case Some(entries) => db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES $entries
@@ -66,7 +85,7 @@ trait EntryRepository extends Repository
     case None => ()
   }
 
-  def add3(entries: Option[NonEmpty[(Long, MyURL)]]) = entries match {
+  def add6(entries: Option[util.NonEmpty[(Long, MyURL)]]) = entries match {
     case Some(entries) => db.run { sqlu"""
     | INSERT INTO ${table} (entry_id, url)
     | VALUES $entries
@@ -86,7 +105,14 @@ trait EntryRepository extends Repository
     | WHERE entry_id = $entryId
     """.as[(Long, String)] }.headOption
 
-  def find(entryIds: Option[NonEmpty[Long]]) = entryIds match {
+  def find1(entryIds: Seq[Long] Refined NonEmpty) =
+    db.run { sql"""
+    | SELECT * FROM ${table}
+    | WHERE entry_id IN ($entryIds)
+    | ORDER BY entry_id ASC
+    """.as[Entry] }
+
+  def find2(entryIds: Option[util.NonEmpty[Long]]) = entryIds match {
     case Some(ids) => db.run { sql"""
     | SELECT * FROM ${table}
     | WHERE entry_id IN ($ids)
@@ -95,7 +121,14 @@ trait EntryRepository extends Repository
     case None => Seq.empty
   }
 
-  def findByUrls(urls: Option[NonEmpty[URL]]) = urls match {
+  def findByUrls1(urls: Seq[URL] Refined NonEmpty) =
+    db.run { sql"""
+    | SELECT * FROM ${table}
+    | WHERE url IN ($urls)
+    | ORDER BY entry_id ASC
+    """.as[Entry] }
+
+  def findByUrls2(urls: Option[util.NonEmpty[URL]]) = urls match {
     case Some(urls) => db.run { sql"""
     | SELECT * FROM ${table}
     | WHERE url IN ($urls)
@@ -143,43 +176,81 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
       for (e <- entries1) add1(e)
 
       val entryIds = scala.util.Random.shuffle(entries1.map(_.id)).toSeq
-      val result1 = find(entryIds)
+      val result1 = find2(entryIds)
       result1 should be (entries1)
 
       val entries2 = Iterator.continually{ freshEntry }.take(10).toSeq
       for (e <- entries2) add2(e)
 
       val urls = scala.util.Random.shuffle(entries2.map(_.url)).toSeq
-      val result2 = findByUrls(urls)
+      val result2 = findByUrls2(urls)
       result2 should be (entries2)
     }
 
     it("should return an empty list if nothing matched") {
       val entryIds =  Iterator.continually{ helper.FreshId()+0L }.take(10).toSeq
-      val result = find(scala.util.Random.shuffle(entryIds).toSeq)
+      val result = find2(scala.util.Random.shuffle(entryIds).toSeq)
       result shouldBe Seq.empty
     }
   }
 
   describe("INSERTing multiple entries") {
     it("should succeed") {
-      val entries1 = Iterator.continually{ freshEntry }.take(10).toSeq
-      add1(entries1)
+      locally {
+        val entries = Iterator.continually{ freshEntry }.take(10).toSeq
+        val Right(entries1) = refineV[NonEmpty](entries)
+        add1(entries1)
 
-      val result1 = find(entries1.map(_.id).toSeq)
-      result1 should be (entries1)
+        val Right(entryIds) = refineV[NonEmpty](entries.map(_.id).toSeq)
+        val result = find1(entryIds)
+        result should be (entries)
+      }
 
-      val entries2 = Iterator.continually{ freshEntry }.take(10).toSeq
-      add2(entries2.map{ e => (e.id, e.url) })
+      locally {
+        val entries = Iterator.continually{ freshEntry }.take(10).toSeq
+        val Right(entries1) =
+          refineV[NonEmpty](entries.map{ e => (e.id, e.url) })
+        add2(entries1)
 
-      val result2 = findByUrls(entries2.map(_.url).toSeq)
-      result2 should be (entries2)
+        val Right(urls) = refineV[NonEmpty](entries.map(_.url).toSeq)
+        val result = findByUrls1(urls)
+        result should be (entries)
+      }
 
-      val entries3 = Iterator.continually{ freshEntry }.take(10).toSeq
-      add3(entries3.map{ e => (e.id, new MyURL(e.url.url)) })
+      locally {
+        val entries = Iterator.continually{ freshEntry }.take(10).toSeq
+        val Right(entries1) =
+          refineV[NonEmpty](entries.map{ e => (e.id, new MyURL(e.url.url)) })
+        add3(entries1)
 
-      val result3 = findByUrls(entries3.map(_.url).toSeq)
-      result3 should be (entries3)
+        val Right(urls) = refineV[NonEmpty](entries.map(_.url).toSeq)
+        val result = findByUrls1(urls)
+        result should be (entries)
+      }
+
+      locally {
+        val entries = Iterator.continually{ freshEntry }.take(10).toSeq
+        add4(entries)
+
+        val result = find2(entries.map(_.id).toSeq)
+        result should be (entries)
+      }
+
+      locally {
+        val entries = Iterator.continually{ freshEntry }.take(10).toSeq
+        add5(entries.map{ e => (e.id, e.url) })
+
+        val result = findByUrls2(entries.map(_.url).toSeq)
+        result should be (entries)
+      }
+
+      locally {
+        val entries = Iterator.continually{ freshEntry }.take(10).toSeq
+        add6(entries.map{ e => (e.id, new MyURL(e.url.url)) })
+
+        val result = findByUrls2(entries.map(_.url).toSeq)
+        result should be (entries)
+      }
     }
   }
 }
@@ -188,9 +259,14 @@ class IntegrationSpec extends UnitSpec with TestDB with EntryRepository {
 trait IdsRepository extends Repository
     with SQLInterpolation with CompoundParameter
     with GetResult with AutoUnwrapOption {
-  import util.NonEmpty
 
-  def add(ids: Option[NonEmpty[Tuple1[Long]]]) = ids match {
+  def add1(ids: Seq[Tuple1[Long]] Refined NonEmpty) =
+    db.run { sqlu"""
+    | INSERT INTO ids (id)
+    | VALUES ($ids)
+    """ }
+
+  def add2(ids: Option[util.NonEmpty[Tuple1[Long]]]) = ids match {
     case Some(ids) => db.run { sqlu"""
     | INSERT INTO ids (id)
     | VALUES ($ids)
@@ -198,7 +274,13 @@ trait IdsRepository extends Repository
     case None => ()
   }
 
-  def addBadly(ids: Option[NonEmpty[Long]]) = ids match {
+  def addBadly1(ids: Seq[Long] Refined NonEmpty) =
+    db.run { sqlu"""
+    | INSERT INTO ids (id)
+    | VALUES ($ids)
+    """ }
+
+  def addBadly2(ids: Option[util.NonEmpty[Long]]) = ids match {
     case Some(ids) => db.run { sqlu"""
     | INSERT INTO ids (id)
     | VALUES ($ids)
@@ -206,7 +288,14 @@ trait IdsRepository extends Repository
     case None => ()
   }
 
-  def find(ids: Option[NonEmpty[Long]]) = ids match {
+  def find1(ids: Seq[Long] Refined NonEmpty) =
+    db.run { sql"""
+    | SELECT * FROM ids
+    | WHERE id IN $ids
+    | ORDER BY id ASC
+    """.as[Long] }
+
+  def find2(ids: Option[util.NonEmpty[Long]]) = ids match {
     case Some(ids) => db.run { sql"""
     | SELECT * FROM ids
     | WHERE id IN $ids
@@ -221,19 +310,41 @@ class SingleTupleSpec extends UnitSpec with TestDB with IdsRepository {
 
   describe("SELECTing multiple records INSERTed by single tuples") {
     it("should succeed") {
-      val ids = Iterator.continually{ freshId }.take(10).toSeq
-      val tuples = ids.map(Tuple1(_))
-      add(tuples)
+      locally {
+        val ids = Iterator.continually{ freshId }.take(10).toSeq
+        val tuples = ids.map(Tuple1(_))
+        val Right(tuples1) = refineV[NonEmpty](tuples)
+        add1(tuples1)
 
-      val result = find(scala.util.Random.shuffle(ids).toSeq)
-      result should be (ids)
+        val Right(ids1) =
+          refineV[NonEmpty](scala.util.Random.shuffle(ids).toSeq)
+        val result = find1(ids1)
+        result should be (ids)
+      }
+
+      locally {
+        val ids = Iterator.continually{ freshId }.take(10).toSeq
+        val tuples = ids.map(Tuple1(_))
+        add2(tuples)
+
+        val result = find2(scala.util.Random.shuffle(ids).toSeq)
+        result should be (ids)
+      }
     }
   }
 
   describe("INSERTing single columns by a list") {
     it("should fail") {
-      val ids = Iterator.continually{ freshId }.take(10).toSeq
-      a [java.sql.SQLException] should be thrownBy addBadly(ids)
+      locally {
+        val ids = Iterator.continually{ freshId }.take(10).toSeq
+        val Right(ids1) = refineV[NonEmpty](ids)
+        a [java.sql.SQLException] should be thrownBy addBadly1(ids1)
+      }
+
+      locally {
+        val ids = Iterator.continually{ freshId }.take(10).toSeq
+        a [java.sql.SQLException] should be thrownBy addBadly2(ids)
+      }
     }
   }
 }

@@ -2,7 +2,9 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
-import util.NonEmpty
+import eu.timepit.refined
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.collection.NonEmpty
 import interpolation.{Literal => LiteralParameter}
 import scala.reflect.macros.blackbox.Context
 
@@ -40,6 +42,8 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     tq"""$interpolation.${TypeName("CheckOptionNonEmpty")}"""
   private lazy val CheckOption =
     tq"""$interpolation.${TypeName("CheckOption")}"""
+  private lazy val CheckEither =
+    tq"""$interpolation.${TypeName("CheckEither")}"""
   private def checkParameter(required: Type, base: Tree = CheckParameter) =
     q"implicitly[$base[$required]]"
   private val ToPlaceholder =
@@ -49,8 +53,14 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
   private val Translators =
     tq"Traversable[$NS.query.Translator]"
 
+  private def isRefinedNonEmptyList(t: Type): Boolean =
+    t.typeSymbol.asClass.fullName == typeOf[Refined[_, _]].typeSymbol.asClass.fullName &&
+      t.typeArgs(0) <:< typeOf[Traversable[Any]] &&
+      t.typeArgs(1) <:< typeOf[NonEmpty]
+
   private def isCompoundType(t: Type): Boolean =
-    Seq(typeOf[NonEmpty[Any]], typeOf[Product]).exists(t <:< _)
+    Seq(typeOf[util.NonEmpty[Any]], typeOf[Product]).exists(t <:< _) ||
+      isRefinedNonEmptyList(t)
 
   def invokeInterpolation(param: c.Expr[Any]*): Tree = {
     val stats = new ListBuffer[Tree]
@@ -145,16 +155,21 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
         // with multiple conditions for example an
         // Option[NonEmpty[Any]] is also a Product.
 
-        if (param.actualType <:< typeOf[NonEmpty[Any]])
+        if (param.actualType <:< typeOf[util.NonEmpty[Any]])
           stats.append(checkParameter(param.actualType, CheckNonEmpty))
-        else if (param.actualType <:< typeOf[Option[NonEmpty[Any]]])
+        else if (isRefinedNonEmptyList(param.actualType))
+          stats.append(checkParameter(param.actualType, CheckNonEmpty))
+        else if (param.actualType <:< typeOf[Option[util.NonEmpty[Any]]])
           stats.append(checkParameter(param.actualType, CheckOptionNonEmpty))
         else if (param.actualType <:< typeOf[Traversable[Any]])
           stats.append(checkParameter(param.actualType, CheckList))
 
         param.actualType.foreach { t =>
-          if (t <:< typeOf[Option[Any]])
+          if (t <:< typeOf[Option[Any]]) {
             stats.append(checkParameter(t, CheckOption))
+          } else if (t <:< typeOf[Either[Any, Any]]) {
+            stats.append(checkParameter(t, CheckEither))
+          }
         }
 
         if (param.actualType <:< typeOf[Product])
