@@ -75,75 +75,83 @@ class SetProduct[-T](implicit product: T <:< Product) extends SP[T] {
 
 @implicitNotFound(msg = "Unsupported parameter type: ${T}.\n" +
   "[NOTE] You need an implicit of slick.jdbc.SetParameter[${T}] to pass a value of the type.")
-sealed trait CheckParameter[-T]
-object CheckParameter {
-  implicit def valid[T](implicit c: SP[T]): CheckParameter[T] =
-    new CheckParameter[T] {}
+sealed trait ValidParameter[-T]
+object ValidParameter {
+  implicit def valid[T](implicit c: SP[T]): ValidParameter[T] =
+    new ValidParameter[T] {}
 }
 
-@implicitNotFound(msg = "A product is passed.\n" +
+@implicitNotFound(msg = "A product ${T} is passed.\n" +
   "[NOTE] Use interpolation.CompoundParameter trait to enable passing a product.")
-sealed trait CheckProduct[-T]
-object CheckProduct {
-  implicit def valid[T](implicit c: SP[T]): CheckProduct[T] =
-    new CheckProduct[T] {}
+sealed trait ValidProduct[-T]
+object ValidProduct {
+  implicit def valid1[T](implicit
+    c: SP[T],
+    product: T <:< Product,
+  ): ValidProduct[T] = new ValidProduct[T] {}
+
+  implicit def valid2[T](implicit check: IsNotProduct[T]): ValidProduct[T] =
+    new ValidProduct[T] {}
+}
+
+@implicitNotFound(msg = "A non-empty list is passed.\n" +
+  "[NOTE] Use interpolation.CompoundParameter trait to enable passing a non-empty list.")
+sealed trait ValidNonEmpty[-T]
+object ValidNonEmpty {
+  implicit def valid1[T](implicit
+    c: SP[T],
+    ne: T <:< util.NonEmpty[_],
+  ): ValidNonEmpty[T] = new ValidNonEmpty[T] {}
+
+  implicit def valid2[T](implicit check: IsNotNonEmpty[T]): ValidNonEmpty[T] =
+    new ValidNonEmpty[T] {}
+}
+
+@implicitNotFound(msg = "A non-empty list is passed.\n" +
+  "[NOTE] Use interpolation.CompoundParameter trait to enable passing a non-empty list.")
+sealed trait ValidRefinedNonEmpty[-T]
+object ValidRefinedNonEmpty {
+  implicit def valid1[A, L[X] <: Traversable[X]](implicit
+    c: SP[L[A] Refined NonEmpty]
+  ): ValidRefinedNonEmpty[L[A] Refined NonEmpty] =
+    new ValidRefinedNonEmpty[L[A] Refined NonEmpty] {}
+
+  implicit def valid2[T](implicit
+    check: IsNotRefinedNonEmpty[T]
+  ): ValidRefinedNonEmpty[T] = new ValidRefinedNonEmpty[T] {}
 }
 
 @implicitNotFound(msg = "Illegal parameter type: ${T}.\n" +
   "[NOTE] A list is not allowed since it may be empty and breaks the query.\n" +
   "[NOTE] Pass a ${T} Refind NonEmpty if you know that it is not empty.")
-sealed trait CheckList[-T]
-object CheckList {
-  implicit def valid[T](implicit c: SP[T]): CheckList[T] =
-    new CheckList[T] {}
-}
-
-@implicitNotFound(msg = "A non-empty list is passed.\n" +
-  "[NOTE] Use interpolation.CompoundParameter trait to enable passing a non-empty list.")
-sealed trait CheckNonEmpty[-T]
-object CheckNonEmpty {
-  implicit def valid[T](implicit c: SP[T]): CheckNonEmpty[T] =
-    new CheckNonEmpty[T] {}
-}
-
-@implicitNotFound(msg = "A maybe-non-empty list is passed.\n" +
-  "[NOTE] Break it into Some(_) or None to confirm that it is not empty.")
-sealed trait CheckOptionNonEmpty[-T]
-object CheckOptionNonEmpty {
-  implicit def valid[T](implicit
-    check: IsNotOptionNonEmpty[T],
-    c: SP[T]
-  ): CheckOptionNonEmpty[T] = new CheckOptionNonEmpty[T] {}
+sealed trait ListRejected[-T]
+object ListRejected {
+  implicit def valid[T](implicit check: IsNotList[T]): ListRejected[T] =
+    new ListRejected[T] {}
 }
 
 @implicitNotFound(msg = "Illegal parameter type: ${T}\n" +
   "[NOTE] An option is not allowed since it may be none and breaks the query.\n" +
   "[NOTE] Break it into Some(_) or None to confirm that it has a value.")
-sealed trait CheckOption[-T]
-object CheckOption {
-  implicit def valid[T](implicit
-    check: IsNotOption[T],
-    c: SP[T]
-  ): CheckOption[T] = new CheckOption[T] {}
+sealed trait OptionRejected[-T]
+object OptionRejected {
+  implicit def valid[T](implicit check: IsNotOption[T]): OptionRejected[T] =
+    new OptionRejected[T] {}
 }
 
 @implicitNotFound(msg = "Illegal parameter type: ${T}\n" +
   "[NOTE] Break it into Left(_) or Right(_) to confirm that it can be embedded into the query.")
-sealed trait CheckEither[-T]
-object CheckEither {
-  implicit def valid[T](implicit
-    check: IsNotEither[T],
-    c: SP[T]
-  ): CheckEither[T] = new CheckEither[T] {}
+sealed trait EitherRejected[-T]
+object EitherRejected {
+  implicit def valid[T](implicit check: IsNotEither[T]): EitherRejected[T] =
+    new EitherRejected[T] {}
 }
 
-sealed trait IsNotOptionNonEmpty[-T]
-object IsNotOptionNonEmpty {
-  implicit def valid[T]: IsNotOptionNonEmpty[T] = new IsNotOptionNonEmpty[T] {}
-  implicit def ambig1[T]: IsNotOptionNonEmpty[Option[util.NonEmpty[T]]] =
-    sys.error("unexpected")
-  implicit def ambig2[T]: IsNotOptionNonEmpty[Option[util.NonEmpty[T]]] =
-    sys.error("unexpected")
+sealed trait IsNotProduct[-T]
+object IsNotProduct {
+  implicit def valid[T]: IsNotProduct[T] = new IsNotProduct[T] {}
+  implicit def ambig1: IsNotProduct[Product] = sys.error("unexpected")
+  implicit def ambig2: IsNotProduct[Product] = sys.error("unexpected")
 }
 
 sealed trait IsNotOption[-T]
@@ -169,6 +177,31 @@ object IsNotEither {
     sys.error("unexpected")
   implicit def ambig2[S](implicit either: S <:< Either[_, _]): IsNotEither[S] =
     sys.error("unexpected")
+}
+
+sealed trait IsNotList[-T]
+object IsNotList {
+  implicit def valid[T]: IsNotList[T] = new IsNotList[T] {}
+  implicit def ambig1[S]: IsNotList[Traversable[S]] = sys.error("unexpected")
+  implicit def ambig2[S]: IsNotList[Traversable[S]] = sys.error("unexpected")
+}
+
+sealed trait IsNotNonEmpty[-T]
+object IsNotNonEmpty {
+  implicit def valid[T]: IsNotNonEmpty[T] = new IsNotNonEmpty[T] {}
+  implicit def ambig1[S]: IsNotNonEmpty[util.NonEmpty[S]] =
+    sys.error("unexpected")
+  implicit def ambig2[S]: IsNotNonEmpty[util.NonEmpty[S]] =
+    sys.error("unexpected")
+}
+
+sealed trait IsNotRefinedNonEmpty[-T]
+object IsNotRefinedNonEmpty {
+  implicit def valid[T]: IsNotRefinedNonEmpty[T] =
+    new IsNotRefinedNonEmpty[T] {}
+
+  implicit def ambig1[A, L[X] <: Traversable[X]]: IsNotRefinedNonEmpty[L[A] Refined NonEmpty] = sys.error("unexpected")
+  implicit def ambig2[A, L[X] <: Traversable[X]]: IsNotRefinedNonEmpty[L[A] Refined NonEmpty] = sys.error("unexpected")
 }
 
 sealed trait IsTuple[-T]

@@ -2,9 +2,6 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
-import eu.timepit.refined
-import eu.timepit.refined.api.Refined
-import eu.timepit.refined.collection.NonEmpty
 import interpolation.{Literal => LiteralParameter}
 import scala.reflect.macros.blackbox.Context
 
@@ -30,21 +27,21 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
 
   private val NS = q"com.github.tarao.slickjdbc"
   private val interpolation = q"$NS.interpolation"
-  private lazy val CheckParameter =
-    tq"""$interpolation.${TypeName("CheckParameter")}"""
-  private lazy val CheckProduct =
-    tq"""$interpolation.${TypeName("CheckProduct")}"""
-  private lazy val CheckList =
-    tq"""$interpolation.${TypeName("CheckList")}"""
-  private lazy val CheckNonEmpty =
-    tq"""$interpolation.${TypeName("CheckNonEmpty")}"""
-  private lazy val CheckOptionNonEmpty =
-    tq"""$interpolation.${TypeName("CheckOptionNonEmpty")}"""
-  private lazy val CheckOption =
-    tq"""$interpolation.${TypeName("CheckOption")}"""
-  private lazy val CheckEither =
-    tq"""$interpolation.${TypeName("CheckEither")}"""
-  private def checkParameter(required: Type, base: Tree = CheckParameter) =
+  private lazy val ListRejected =
+    tq"""$interpolation.${TypeName("ListRejected")}"""
+  private lazy val OptionRejected =
+    tq"""$interpolation.${TypeName("OptionRejected")}"""
+  private lazy val EitherRejected =
+    tq"""$interpolation.${TypeName("EitherRejected")}"""
+  private lazy val ValidParameter =
+    tq"""$interpolation.${TypeName("ValidParameter")}"""
+  private lazy val ValidProduct =
+    tq"""$interpolation.${TypeName("ValidProduct")}"""
+  private lazy val ValidNonEmpty =
+    tq"""$interpolation.${TypeName("ValidNonEmpty")}"""
+  private lazy val ValidRefinedNonEmpty =
+    tq"""$interpolation.${TypeName("ValidRefinedNonEmpty")}"""
+  private def ensure(required: Type, base: Tree = ValidParameter) =
     q"implicitly[$base[$required]]"
   private val ToPlaceholder =
     tq"""$interpolation.${TypeName("ToPlaceholder")}"""
@@ -52,15 +49,6 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     q"implicitly[$base[$target]]"
   private val Translators =
     tq"Traversable[$NS.query.Translator]"
-
-  private def isRefinedNonEmptyList(t: Type): Boolean =
-    t.typeSymbol.asClass.fullName == typeOf[Refined[_, _]].typeSymbol.asClass.fullName &&
-      t.typeArgs(0) <:< typeOf[Traversable[Any]] &&
-      t.typeArgs(1) <:< typeOf[NonEmpty]
-
-  private def isCompoundType(t: Type): Boolean =
-    Seq(typeOf[util.NonEmpty[Any]], typeOf[Product]).exists(t <:< _) ||
-      isRefinedNonEmptyList(t)
 
   def invokeInterpolation(param: c.Expr[Any]*): Tree = {
     val stats = new ListBuffer[Tree]
@@ -116,9 +104,11 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     }
     def mayCompleteParen(param: c.Expr[Any], s: String)(block: => Unit) {
       if (!s.matches("""(?s).*\(\s*""")) {
-        pushLiteral("(")
+        params.append(c.Expr(q""" ${toPlaceholder(param.actualType)}.open """))
+        queryParts.append(q""" ${"#"} """)
         block
-        pushLiteral(")")
+        params.append(c.Expr(q""" ${toPlaceholder(param.actualType)}.close """))
+        queryParts.append(q""" ${"#"} """)
       } else block
     }
     param.toList.iterator.zip(rawQueryParts.iterator).foreach { zipped =>
@@ -128,17 +118,18 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
           (param, s + { if (literal) "" else "#" }, true)
         else (param, s, literal)
       } }
-      if (!literal && isCompoundType(param.actualType)) {
+      if (!literal) {
         pushLiteral(s)
 
         mayCompleteParen(param, s) {
-          // for "?, ?, ?, ..."
+          // for "?, ?, ?, ..." except the last one
           params.append(c.Expr(q"""
             ${toPlaceholder(param.actualType)}
               .apply(${param})
               .toTopLevelString
           """))
           queryParts.append(q""" ${"#"} """)
+
           // for the last "?" (inserted by ActionBasedSQLInterpolation)
           params.append(param)
           queryParts.append(q""" ${""} """)
@@ -155,27 +146,19 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
         // with multiple conditions for example an
         // Option[NonEmpty[Any]] is also a Product.
 
-        if (param.actualType <:< typeOf[util.NonEmpty[Any]])
-          stats.append(checkParameter(param.actualType, CheckNonEmpty))
-        else if (isRefinedNonEmptyList(param.actualType))
-          stats.append(checkParameter(param.actualType, CheckNonEmpty))
-        else if (param.actualType <:< typeOf[Option[util.NonEmpty[Any]]])
-          stats.append(checkParameter(param.actualType, CheckOptionNonEmpty))
-        else if (param.actualType <:< typeOf[Traversable[Any]])
-          stats.append(checkParameter(param.actualType, CheckList))
+        stats.append(ensure(param.actualType, ValidNonEmpty))
+        stats.append(ensure(param.actualType, ValidRefinedNonEmpty))
+        stats.append(ensure(param.actualType, ListRejected))
 
         param.actualType.foreach { t =>
-          if (t <:< typeOf[Option[Any]]) {
-            stats.append(checkParameter(t, CheckOption))
-          } else if (t <:< typeOf[Either[Any, Any]]) {
-            stats.append(checkParameter(t, CheckEither))
+          if (t <:< typeOf[Any]) {
+            stats.append(ensure(t, OptionRejected))
+            stats.append(ensure(t, EitherRejected))
           }
         }
 
-        if (param.actualType <:< typeOf[Product])
-          stats.append(checkParameter(param.actualType, CheckProduct))
-
-        stats.append(checkParameter(param.actualType))
+        stats.append(ensure(param.actualType, ValidProduct))
+        stats.append(ensure(param.actualType, ValidParameter))
       }
     }
     queryParts.append(q"${rawQueryParts.last}")
