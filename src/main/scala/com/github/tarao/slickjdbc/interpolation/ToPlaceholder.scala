@@ -2,9 +2,7 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
-import eu.timepit.refined
-import eu.timepit.refined.api.Refined
-import eu.timepit.refined.auto.autoUnwrap
+import eu.timepit.refined.api.RefType
 import eu.timepit.refined.collection.NonEmpty
 import scala.language.higherKinds
 
@@ -43,10 +41,12 @@ object ToPlaceholder {
       Placeholder.Nested(value.map(p.apply _).toSeq: _*)
   }
 
-  class FromNonEmptyList[A, L[X] <: Traversable[X], -T <: L[A] Refined NonEmpty](p: ToPlaceholder[A])
-      extends Compound[T] {
+  class FromNonEmptyList[A, L[X] <: Traversable[X], F[_, _], -T <: F[L[A], NonEmpty]](
+    p: ToPlaceholder[A],
+    rt: RefType[F],
+  ) extends Compound[T] {
     def apply(value: T): Placeholder =
-      Placeholder.Nested(value.map(p.apply _).toSeq: _*)
+      Placeholder.Nested(rt.unwrap(value).map(p.apply _).toSeq: _*)
   }
 
   class FromTuple[-T <: Product](children: ToPlaceholder[_]*)

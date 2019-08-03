@@ -2,12 +2,11 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
-import eu.timepit.refined
-import eu.timepit.refined.api.Refined
-import eu.timepit.refined.auto.autoUnwrap
+import eu.timepit.refined.api.RefType
 import eu.timepit.refined.collection.NonEmpty
 import scala.annotation.implicitNotFound
 import scala.language.higherKinds
+import scala.language.implicitConversions
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
 
 trait ListParameter {
@@ -15,20 +14,22 @@ trait ListParameter {
     c: SP[T]
   ): SP[util.NonEmpty[T]] = new SetList[T, util.NonEmpty[T]](c)
 
-  @inline implicit def createSetNonEmptyList[A, L[X] <: Traversable[X]](implicit
-    c: SP[A]
-  ): SP[L[A] Refined NonEmpty] =
-    new SetNonEmptyList[A, L, L[A] Refined NonEmpty](c)
+  @inline implicit def createSetNonEmptyList[A, L[X] <: Traversable[X], F[_, _]](implicit
+    c: SP[A],
+    rt: RefType[F],
+  ): SP[F[L[A], NonEmpty]] =
+    new SetNonEmptyList[A, L, F, F[L[A], NonEmpty]](c, rt)
 
   @inline implicit def listToPlaceholder[T](implicit
     p: ToPlaceholder[T]
   ): ToPlaceholder[util.NonEmpty[T]] =
     new ToPlaceholder.FromList[T, util.NonEmpty[T]](p)
 
-  @inline implicit def nonEmptyListToPlaceholder[A, L[X] <: Traversable[X]](implicit
-    p: ToPlaceholder[A]
-  ): ToPlaceholder[L[A] Refined NonEmpty] =
-    new ToPlaceholder.FromNonEmptyList[A, L, L[A] Refined NonEmpty](p)
+  @inline implicit def nonEmptyListToPlaceholder[A, L[X] <: Traversable[X], F[_, _]](implicit
+    p: ToPlaceholder[A],
+    rt: RefType[F],
+  ): ToPlaceholder[F[L[A], NonEmpty]] =
+    new ToPlaceholder.FromNonEmptyList[A, L, F, F[L[A], NonEmpty]](p, rt)
 }
 object ListParameter extends ListParameter
 
@@ -56,9 +57,9 @@ class SetList[S, -T <: util.NonEmpty[S]](val c: SP[S]) extends SP[T] {
 }
 
 /** SetParameter for non-empty list types. */
-class SetNonEmptyList[A, L[X] <: Traversable[X], -T <: L[A] Refined NonEmpty](val c: SP[A]) extends SP[T] {
+class SetNonEmptyList[A, L[X] <: Traversable[X], F[_, _], -T <: F[L[A], NonEmpty]](val c: SP[A], rt: RefType[F]) extends SP[T] {
   def apply(param: T, pp: PositionedParameters): Unit = {
-    param.foreach(item => c.asInstanceOf[SP[Any]](item, pp))
+    rt.unwrap(param).foreach(item => c.asInstanceOf[SP[Any]](item, pp))
   }
 }
 
@@ -111,10 +112,11 @@ object ValidNonEmpty {
   "[NOTE] Use interpolation.CompoundParameter trait to enable passing a non-empty list.")
 sealed trait ValidRefinedNonEmpty[-T]
 object ValidRefinedNonEmpty {
-  implicit def valid1[A, L[X] <: Traversable[X]](implicit
-    c: SP[L[A] Refined NonEmpty]
-  ): ValidRefinedNonEmpty[L[A] Refined NonEmpty] =
-    new ValidRefinedNonEmpty[L[A] Refined NonEmpty] {}
+  implicit def valid1[A, L[X] <: Traversable[X], F[_, _]](implicit
+    c: SP[F[L[A], NonEmpty]],
+    rt: RefType[F],
+  ): ValidRefinedNonEmpty[F[L[A], NonEmpty]] =
+    new ValidRefinedNonEmpty[F[L[A], NonEmpty]] {}
 
   implicit def valid2[T](implicit
     check: IsNotRefinedNonEmpty[T]
@@ -200,8 +202,12 @@ object IsNotRefinedNonEmpty {
   implicit def valid[T]: IsNotRefinedNonEmpty[T] =
     new IsNotRefinedNonEmpty[T] {}
 
-  implicit def ambig1[A, L[X] <: Traversable[X]]: IsNotRefinedNonEmpty[L[A] Refined NonEmpty] = sys.error("unexpected")
-  implicit def ambig2[A, L[X] <: Traversable[X]]: IsNotRefinedNonEmpty[L[A] Refined NonEmpty] = sys.error("unexpected")
+  implicit def ambig1[A, L[X] <: Traversable[X], F[_, _]](implicit
+    rt: RefType[F]
+  ): IsNotRefinedNonEmpty[F[L[A], NonEmpty]] = sys.error("unexpected")
+  implicit def ambig2[A, L[X] <: Traversable[X], F[_, _]](implicit
+    rt: RefType[F]
+  ): IsNotRefinedNonEmpty[F[L[A], NonEmpty]] = sys.error("unexpected")
 }
 
 sealed trait IsTuple[-T]
