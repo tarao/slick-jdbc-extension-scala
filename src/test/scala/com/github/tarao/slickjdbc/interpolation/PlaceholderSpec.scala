@@ -247,10 +247,6 @@ class PlaceholderSpec extends UnitSpec {
       val Right(nel) = refineV[NonEmpty](Seq(1, 2, 3))
       val p2 = toPlaceholder(nel)
       p2 shouldBe a [Literal]
-
-      val p3 = toPlaceholder(util.NonEmpty(1, 2, 3))
-      p3 shouldBe a [Literal]
-
     }
 
     it("should not be instantiated by a nullary product") {
@@ -269,13 +265,6 @@ class PlaceholderSpec extends UnitSpec {
         p2.toTopLevelString should equal ("?, ?, ?, ?, ")
         val p3 = toPlaceholder(nel3)
         p3.toTopLevelString should equal ("")
-
-        val p4 = toPlaceholder(util.NonEmpty(1, 2, 3))
-        p4.toTopLevelString should equal ("?, ?, ")
-        val p5 = toPlaceholder(util.NonEmpty(1, 2, 3, 4, 5))
-        p5.toTopLevelString should equal ("?, ?, ?, ?, ")
-        val p6 = toPlaceholder(util.NonEmpty(1))
-        p6.toTopLevelString should equal ("")
       }
 
       it("should print '?'s x (product arity - 1)") {
@@ -301,11 +290,6 @@ class PlaceholderSpec extends UnitSpec {
         p2.toTopLevelString should equal ("?, ?), (?), (?, ")
         val p3 = toPlaceholder(nel5)
         p3.toTopLevelString should equal ("?, ?), (?, ?), (?, ")
-
-        val p4 = toPlaceholder(util.NonEmpty(util.NonEmpty(1, 2), util.NonEmpty(3), util.NonEmpty(4, 5)))
-        p4.toTopLevelString should equal ("?, ?), (?), (?, ")
-        val p5 = toPlaceholder(util.NonEmpty((1, "foo"), (2, "bar"), (3, "baz")))
-        p5.toTopLevelString should equal ("?, ?), (?, ?), (?, ")
       }
 
       it("should look into the structure of a nested product") {
@@ -324,9 +308,6 @@ class PlaceholderSpec extends UnitSpec {
 
         val p6 = toPlaceholder(Baz("a list in product is not expanded", nel))
         p6.toTopLevelString should equal ("?, ")
-
-        val p7 = toPlaceholder(Baz("a list in product is not expanded", util.NonEmpty(1, 2)))
-        p7.toTopLevelString should equal ("?, ")
       }
 
       it("should preserve simple type conversions") {
@@ -380,13 +361,6 @@ class PlaceholderSpec extends UnitSpec {
         p2.toString should equal ("(?, ?, ?, ?, ?)")
         val p3 = toPlaceholder(nel3)
         p3.toString should equal ("(?)")
-
-        val p4 = toPlaceholder(util.NonEmpty(1, 2, 3))
-        p4.toString should equal ("(?, ?, ?)")
-        val p5 = toPlaceholder(util.NonEmpty(1, 2, 3, 4, 5))
-        p5.toString should equal ("(?, ?, ?, ?, ?)")
-        val p6 = toPlaceholder(util.NonEmpty(1))
-        p6.toString should equal ("(?)")
       }
 
       it("should print '?'s x (product arity - 1)") {
@@ -411,13 +385,6 @@ class PlaceholderSpec extends UnitSpec {
         p2.toString should equal ("(?, ?), (?, ?), (?, ?)")
         val p3 = toPlaceholder(((1, "foo"), (2, "bar"), (3, "baz")))
         p3.toString should equal ("(?, ?), (?, ?), (?, ?)")
-
-        val p4 = toPlaceholder(util.NonEmpty(util.NonEmpty(1, 2), util.NonEmpty(3), util.NonEmpty(4, 5)))
-        p4.toString should equal ("(?, ?), (?), (?, ?)")
-        val p5 = toPlaceholder(util.NonEmpty((1, "foo"), (2, "bar"), (3, "baz")))
-        p5.toString should equal ("(?, ?), (?, ?), (?, ?)")
-        val p6 = toPlaceholder(((1, "foo"), (2, "bar"), (3, "baz")))
-        p6.toString should equal ("(?, ?), (?, ?), (?, ?)")
       }
 
       it("should look into the structure of a nested product") {

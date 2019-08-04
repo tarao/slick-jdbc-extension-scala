@@ -112,14 +112,6 @@ class InterpolationSpec extends UnitSpec
       assertTypeError(""" sql"SELECT * FROM $undefined" """)
     }
 
-    it("should not embed a non-empty list") {
-      val entryIds = util.NonEmpty(1, 2, 3, 4)
-
-      assertTypeError("""
-        sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
-      """)
-    }
-
     it("should not embed a refined non-empty list") {
       import eu.timepit.refined.collection.NonEmpty
       import eu.timepit.refined.refineV
@@ -129,28 +121,6 @@ class InterpolationSpec extends UnitSpec
       assertTypeError("""
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
       """)
-    }
-
-    it("should embed a non-empty list if it is explicitly enabled") {
-      import CompoundParameter._
-
-      val entryIds = util.NonEmpty(1, 2, 3, 4)
-
-      it should behave like anIdenticalQuery {
-        sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
-      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
-
-      it should behave like anIdenticalQuery {
-        sql"SELECT * FROM entry WHERE entry_id IN $entryIds"
-      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
-
-      it should behave like anIdenticalQuery {
-        sql"SELECT * FROM entry WHERE entry_id IN (${util.NonEmpty(5)})"
-      }("SELECT * FROM entry WHERE entry_id IN (?)")
-
-      it should behave like anIdenticalQuery {
-        sql"SELECT * FROM entry WHERE entry_id IN ${util.NonEmpty(5)}"
-      }("SELECT * FROM entry WHERE entry_id IN (?)")
     }
 
     it("should embed a refined non-empty list if it is explicitly enabled") {
@@ -177,20 +147,6 @@ class InterpolationSpec extends UnitSpec
       it should behave like anIdenticalQuery {
         sql"SELECT * FROM entry WHERE entry_id IN ${entryIds1}"
       }("SELECT * FROM entry WHERE entry_id IN (?)")
-    }
-
-    it("should embed a non-empty set if it is explicitly enabled") {
-      import CompoundParameter._
-
-      val entryIds = util.NonEmpty.fromTraversable(Set(1, 2, 3, 4)).get
-
-      it should behave like anIdenticalQuery {
-        sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
-      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
-
-      it should behave like anIdenticalQuery {
-        sql"SELECT * FROM entry WHERE entry_id IN $entryIds"
-      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?, ?)")
     }
 
     it("should embed a refined non-empty set if it is explicitly enabled") {
@@ -343,18 +299,6 @@ class InterpolationSpec extends UnitSpec
       }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
     }
 
-    it("should not embed a non-empty list of product") {
-      val params = util.NonEmpty(
-        Single("http://example.com/1"),
-        Single("http://example.com/2"),
-        Single("http://example.com/3")
-      )
-
-      assertTypeError("""
-        sql"SELECT * FROM entry WHERE entry_id IN ($params)"
-      """)
-    }
-
     it("should not embed a refined non-empty list of product") {
       import eu.timepit.refined.collection.NonEmpty
       import eu.timepit.refined.refineV
@@ -368,25 +312,6 @@ class InterpolationSpec extends UnitSpec
       assertTypeError("""
         sql"SELECT * FROM entry WHERE entry_id IN ($params)"
       """)
-    }
-
-    it("should embed a non-empty list of product if it is explicitly enabled") {
-      // This works as if Single[Int] is an alias of Int
-      val params = util.NonEmpty(
-        Single(1),
-        Single(2),
-        Single(3)
-      )
-
-      import CompoundParameter._
-
-      it should behave like anIdenticalQuery {
-        sql"SELECT * FROM entry WHERE entry_id IN ($params)"
-      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
-
-      it should behave like anIdenticalQuery {
-        sql"SELECT * FROM entry WHERE entry_id IN $params"
-      }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
     }
 
     it("should embed a refined non-empty list of product if it is explicitly enabled") {
@@ -409,38 +334,6 @@ class InterpolationSpec extends UnitSpec
       it should behave like anIdenticalQuery {
         sql"SELECT * FROM entry WHERE entry_id IN $params"
       }("SELECT * FROM entry WHERE entry_id IN (?, ?, ?)")
-    }
-
-    it("should not embed an option value") {
-      val param = Option(3)
-      val params = util.NonEmpty(Option(3))
-      val tuple = (Option(3), 2, 1)
-
-      assertTypeError("""
-        sql"SELECT * FROM entry WHERE param = $param"
-      """)
-
-      assertTypeError("""
-        sql"SELECT * FROM entry WHERE params IN ($params)"
-      """)
-
-      assertTypeError("""
-        sql"SELECT * FROM entry WHERE params IN ($tuple)"
-      """)
-
-      import CompoundParameter._
-
-      assertTypeError("""
-        sql"SELECT * FROM entry WHERE param = $param"
-      """)
-
-      assertTypeError("""
-        sql"SELECT * FROM entry WHERE params IN ($params)"
-      """)
-
-      assertTypeError("""
-        sql"SELECT * FROM entry WHERE params IN ($tuple)"
-      """)
     }
 
     it("should not embed a refined option value") {
@@ -604,14 +497,6 @@ class InterpolationSpec extends UnitSpec
       """)
     }
 
-    it("should not embed a non-empty list") {
-      val entryIds = util.NonEmpty(1, 2, 3, 4)
-
-      assertTypeError("""
-        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
-      """)
-    }
-
     it("should not embed a refined non-empty list") {
       import eu.timepit.refined.collection.NonEmpty
       import eu.timepit.refined.refineV
@@ -621,44 +506,6 @@ class InterpolationSpec extends UnitSpec
       assertTypeError("""
         sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
       """)
-    }
-
-    it("should embed a non-empty list if it is explicitly enabled") {
-      import CompoundParameter._
-
-      val entryIds = util.NonEmpty(1, 2, 3, 4)
-
-      it should behave like anIdenticalStatement {
-        sqlu"""
-          UPDATE entry
-          SET flag = 1
-          WHERE entry_id IN ($entryIds)
-        """
-      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
-
-      it should behave like anIdenticalStatement {
-        sqlu"""
-          UPDATE entry
-          SET flag = 1
-          WHERE entry_id IN $entryIds
-        """
-      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
-
-      it should behave like anIdenticalStatement {
-        sqlu"""
-          UPDATE entry
-          SET flag = 1
-          WHERE entry_id IN (${util.NonEmpty(5)})
-        """
-      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
-
-      it should behave like anIdenticalStatement {
-        sqlu"""
-          UPDATE entry
-          SET flag = 1
-          WHERE entry_id IN ${util.NonEmpty(5)}
-        """
-      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
     }
 
     it("should embed a refined non-empty list if it is explicitly enabled") {
@@ -701,24 +548,6 @@ class InterpolationSpec extends UnitSpec
           WHERE entry_id IN ${entryIds1}
         """
       }("UPDATE entry SET flag = 1 WHERE entry_id IN (?)")
-    }
-
-    it("should not embed an option non-empty list") {
-      import CompoundParameter._
-
-      val entryIds = Option(util.NonEmpty(1, 2, 3, 4))
-
-      assertTypeError("""
-        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
-      """)
-
-      it should behave like anIdenticalStatement {
-        sqlu"""
-          UPDATE entry
-          SET flag = 1
-          WHERE entry_id IN (${entryIds.get})
-        """
-      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?, ?)")
     }
 
     it("should not embed an option refined non-empty list") {
@@ -867,48 +696,6 @@ class InterpolationSpec extends UnitSpec
       }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?)")
     }
 
-    it("should not embed a non-empty list of product") {
-      val params1 = util.NonEmpty(
-        (1, "http://example.com/1"),
-        (2, "http://example.com/2"),
-        (3, "http://example.com/3")
-      )
-
-      val params2 = util.NonEmpty(
-        Tuple1("http://example.com/1"),
-        Tuple1("http://example.com/2"),
-        Tuple1("http://example.com/3")
-      )
-
-      val params3 = util.NonEmpty(
-        Single("http://example.com/1"),
-        Single("http://example.com/2"),
-        Single("http://example.com/3")
-      )
-
-      val params4 = util.NonEmpty(
-        Double(1, "http://example.com/1"),
-        Double(2, "http://example.com/2"),
-        Double(3, "http://example.com/3")
-      )
-
-      assertTypeError("""
-        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params1)"
-      """)
-
-      assertTypeError("""
-        sqlu"INSERT INTO entry (url) VALUES ($params2)"
-      """)
-
-      assertTypeError("""
-        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($params3)"
-      """)
-
-      assertTypeError("""
-        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params4)"
-      """)
-    }
-
     it("should not embed a refined non-empty list of product") {
       import eu.timepit.refined.collection.NonEmpty
       import eu.timepit.refined.refineV
@@ -952,67 +739,6 @@ class InterpolationSpec extends UnitSpec
       assertTypeError("""
         sqlu"INSERT INTO entry (entry_id, url) VALUES ($params4)"
       """)
-    }
-
-    it("should embed a non-empty list of product if it is explicitly enabled") {
-      val params1 = util.NonEmpty(
-        (1, "http://example.com/1"),
-        (2, "http://example.com/2"),
-        (3, "http://example.com/3")
-      )
-
-      val params2 = util.NonEmpty(
-        Tuple1("http://example.com/1"),
-        Tuple1("http://example.com/2"),
-        Tuple1("http://example.com/3")
-      )
-
-      // This works as if Single[String] is an alias of String
-      val params3 = util.NonEmpty(
-        Single("http://example.com/1"),
-        Single("http://example.com/2"),
-        Single("http://example.com/3")
-      )
-
-      val params4 = util.NonEmpty(
-        Double(1, "http://example.com/1"),
-        Double(2, "http://example.com/2"),
-        Double(3, "http://example.com/3")
-      )
-
-      import CompoundParameter._
-
-      it should behave like anIdenticalStatement {
-        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params1)"
-      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
-
-      it should behave like anIdenticalStatement {
-        sqlu"INSERT INTO entry (entry_id, url) VALUES $params1"
-      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
-
-      it should behave like anIdenticalStatement {
-        sqlu"INSERT INTO entry (url) VALUES ($params2)"
-      }("INSERT INTO entry (url) VALUES (?), (?), (?)")
-
-      it should behave like anIdenticalStatement {
-        sqlu"INSERT INTO entry (url) VALUES $params2"
-      }("INSERT INTO entry (url) VALUES (?), (?), (?)")
-
-      it should behave like anIdenticalStatement {
-        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($params3)"
-      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?)")
-
-      it should behave like anIdenticalStatement {
-        sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN $params3"
-      }("UPDATE entry SET flag = 1 WHERE entry_id IN (?, ?, ?)")
-
-      it should behave like anIdenticalStatement {
-        sqlu"INSERT INTO entry (entry_id, url) VALUES ($params4)"
-      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
-
-      it should behave like anIdenticalStatement {
-        sqlu"INSERT INTO entry (entry_id, url) VALUES $params4"
-      }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
     }
 
     it("should embed a refined non-empty list of product if it is explicitly enabled") {
@@ -1077,38 +803,6 @@ class InterpolationSpec extends UnitSpec
       it should behave like anIdenticalStatement {
         sqlu"INSERT INTO entry (entry_id, url) VALUES $params4"
       }("INSERT INTO entry (entry_id, url) VALUES (?, ?), (?, ?), (?, ?)")
-    }
-
-    it("should not embed an option value") {
-      val param = Option(3)
-      val params = util.NonEmpty(Option(3))
-      val tuple = (Option(3), 2, 1)
-
-      assertTypeError("""
-        sqlu"UPDATE entry SET flag = 1 WHERE param = $param"
-      """)
-
-      assertTypeError("""
-        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($params)"
-      """)
-
-      assertTypeError("""
-        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($tuple)"
-      """)
-
-      import CompoundParameter._
-
-      assertTypeError("""
-        sqlu"UPDATE entry SET flag = 1 WHERE param = $param"
-      """)
-
-      assertTypeError("""
-        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($params)"
-      """)
-
-      assertTypeError("""
-        sqlu"UPDATE entry SET flag = 1 WHERE params IN ($tuple)"
-      """)
     }
 
     it("should not embed a refined option value") {
