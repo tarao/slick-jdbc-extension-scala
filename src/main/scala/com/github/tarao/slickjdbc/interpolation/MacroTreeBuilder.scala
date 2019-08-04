@@ -37,8 +37,6 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     tq"""$interpolation.${TypeName("ValidParameter")}"""
   private lazy val ValidProduct =
     tq"""$interpolation.${TypeName("ValidProduct")}"""
-  private lazy val ValidNonEmpty =
-    tq"""$interpolation.${TypeName("ValidNonEmpty")}"""
   private lazy val ValidRefinedNonEmpty =
     tq"""$interpolation.${TypeName("ValidRefinedNonEmpty")}"""
   private def ensure(required: Type, base: Tree = ValidParameter) =
@@ -146,7 +144,6 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
         // with multiple conditions for example an
         // Option[NonEmpty[Any]] is also a Product.
 
-        stats.append(ensure(param.actualType, ValidNonEmpty))
         stats.append(ensure(param.actualType, ValidRefinedNonEmpty))
         stats.append(ensure(param.actualType, ListRejected))
 

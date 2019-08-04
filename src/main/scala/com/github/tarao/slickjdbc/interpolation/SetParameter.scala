@@ -10,20 +10,11 @@ import scala.language.implicitConversions
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
 
 trait ListParameter {
-  @inline implicit def createSetList[T](implicit
-    c: SP[T]
-  ): SP[util.NonEmpty[T]] = new SetList[T, util.NonEmpty[T]](c)
-
   @inline implicit def createSetNonEmptyList[A, L[X] <: Traversable[X], F[_, _]](implicit
     c: SP[A],
     rt: RefType[F],
   ): SP[F[L[A], NonEmpty]] =
     new SetNonEmptyList[A, L, F, F[L[A], NonEmpty]](c, rt)
-
-  @inline implicit def listToPlaceholder[T](implicit
-    p: ToPlaceholder[T]
-  ): ToPlaceholder[util.NonEmpty[T]] =
-    new ToPlaceholder.FromList[T, util.NonEmpty[T]](p)
 
   @inline implicit def nonEmptyListToPlaceholder[A, L[X] <: Traversable[X], F[_, _]](implicit
     p: ToPlaceholder[A],
@@ -48,13 +39,6 @@ object ProductParameter extends ProductParameter
 
 trait CompoundParameter extends ListParameter with ProductParameter
 object CompoundParameter extends CompoundParameter
-
-/** SetParameter for non-empty list types. */
-class SetList[S, -T <: util.NonEmpty[S]](val c: SP[S]) extends SP[T] {
-  def apply(param: T, pp: PositionedParameters): Unit = {
-    param.foreach { item => c.asInstanceOf[SP[Any]](item, pp) }
-  }
-}
 
 /** SetParameter for non-empty list types. */
 class SetNonEmptyList[A, L[X] <: Traversable[X], F[_, _], -T <: F[L[A], NonEmpty]](val c: SP[A], rt: RefType[F]) extends SP[T] {
@@ -93,19 +77,6 @@ object ValidProduct {
 
   implicit def valid2[T](implicit check: IsNotProduct[T]): ValidProduct[T] =
     new ValidProduct[T] {}
-}
-
-@implicitNotFound(msg = "A non-empty list is passed.\n" +
-  "[NOTE] Use interpolation.CompoundParameter trait to enable passing a non-empty list.")
-sealed trait ValidNonEmpty[-T]
-object ValidNonEmpty {
-  implicit def valid1[T](implicit
-    c: SP[T],
-    ne: T <:< util.NonEmpty[_],
-  ): ValidNonEmpty[T] = new ValidNonEmpty[T] {}
-
-  implicit def valid2[T](implicit check: IsNotNonEmpty[T]): ValidNonEmpty[T] =
-    new ValidNonEmpty[T] {}
 }
 
 @implicitNotFound(msg = "A non-empty list is passed.\n" +
@@ -186,15 +157,6 @@ object IsNotList {
   implicit def valid[T]: IsNotList[T] = new IsNotList[T] {}
   implicit def ambig1[S]: IsNotList[Traversable[S]] = sys.error("unexpected")
   implicit def ambig2[S]: IsNotList[Traversable[S]] = sys.error("unexpected")
-}
-
-sealed trait IsNotNonEmpty[-T]
-object IsNotNonEmpty {
-  implicit def valid[T]: IsNotNonEmpty[T] = new IsNotNonEmpty[T] {}
-  implicit def ambig1[S]: IsNotNonEmpty[util.NonEmpty[S]] =
-    sys.error("unexpected")
-  implicit def ambig2[S]: IsNotNonEmpty[util.NonEmpty[S]] =
-    sys.error("unexpected")
 }
 
 sealed trait IsNotRefinedNonEmpty[-T]

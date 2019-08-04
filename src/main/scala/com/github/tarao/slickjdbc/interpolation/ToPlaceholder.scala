@@ -35,12 +35,6 @@ object ToPlaceholder {
     }
   }
 
-  class FromList[S, -T <: util.NonEmpty[S]](p: ToPlaceholder[S])
-      extends Compound[T] {
-    def apply(value: T): Placeholder =
-      Placeholder.Nested(value.map(p.apply _).toSeq: _*)
-  }
-
   class FromNonEmptyList[A, L[X] <: Traversable[X], F[_, _], -T <: F[L[A], NonEmpty]](
     p: ToPlaceholder[A],
     rt: RefType[F],
