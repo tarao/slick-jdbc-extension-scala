@@ -20,11 +20,11 @@ case class UrlEntry(id: Long, url: URL)
 
 trait GetResultBehavior { self: UnitSpec =>
   def positionedResult(rs: ResultSet) =
-    new PositionedResult(rs) { def close {} }
+    new PositionedResult(rs) { def close = {} }
 
   def mappingResult[R : Manifest](rs: ResultSet, expected: R)(implicit
     rconv: GR[R]
-  ) {
+  ) = {
     val result = rconv(positionedResult(rs).restart)
     result shouldBe a [R]
     result should be (expected)

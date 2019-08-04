@@ -46,7 +46,7 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
   private def toPlaceholder(target: Type, base: Tree = ToPlaceholder) =
     q"implicitly[$base[$target]]"
   private val Translators =
-    tq"Traversable[$NS.query.Translator]"
+    tq"Iterable[$NS.query.Translator]"
 
   def invokeInterpolation(param: c.Expr[Any]*): Tree = {
     val stats = new ListBuffer[Tree]
@@ -96,11 +96,11 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     // `list`.
     val queryParts = new ListBuffer[Tree]
     val params = new ListBuffer[c.Expr[Any]]
-    def pushLiteral(literal: String) {
+    def pushLiteral(literal: String) = {
         params.append(c.Expr(q""" ${""} """))
         queryParts.append(q""" ${literal + "#"} """)
     }
-    def mayCompleteParen(param: c.Expr[Any], s: String)(block: => Unit) {
+    def mayCompleteParen(param: c.Expr[Any], s: String)(block: => Unit) = {
       if (!s.matches("""(?s).*\(\s*""")) {
         params.append(c.Expr(q""" ${toPlaceholder(param.actualType)}.open """))
         queryParts.append(q""" ${"#"} """)

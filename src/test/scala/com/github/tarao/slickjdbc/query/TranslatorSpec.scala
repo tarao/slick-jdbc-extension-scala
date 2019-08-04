@@ -45,7 +45,7 @@ class SQLCommentSpec extends UnitSpec {
 class CallerCommenterSpec extends UnitSpec {
   describe("CallerCommenter") {
     it("should embed a caller information as a comment") {
-      implicit val translators : Traversable[Translator] = Seq(CallerCommenter)
+      implicit val translators : Iterable[Translator] = Seq(CallerCommenter)
       val query = Translator.translate("SELECT * FROM entry LIMIT 1")
       val caller = "com[.]github[.]tarao[.]slickjdbc[.]query[.]CallerCommenterSpec.*[(]TranslatorSpec[.]scala:[0-9]+[)]"
       query should fullyMatch regex (
@@ -58,7 +58,7 @@ class CallerCommenterSpec extends UnitSpec {
 class MarginStripperSpec extends UnitSpec {
   describe("MarginStripper") {
     it("should strip margin by '|'") {
-      implicit val translators : Traversable[Translator] = Seq(MarginStripper)
+      implicit val translators : Iterable[Translator] = Seq(MarginStripper)
       val query = Translator.translate("""
       | SELECT * FROM entry
       | LIMIT 1""")

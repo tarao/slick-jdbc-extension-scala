@@ -301,14 +301,14 @@ can stack multiple translators.
 ### Custom translators
 
 You can use a custom translator stack by defining an implicit value of
-`Traversable[query.Translator]`.  For example, if you want to add a
+`Iterable[query.Translator]`.  For example, if you want to add a
 translator after the default translators, define an implicit value in
 a static scope where you invoke the SQL interpolation.
 
 ```scala
 import com.github.tarao.slickjdbc._
 
-implicit val translators: Traversable[query.Translator] = Seq(
+implicit val translators: Iterable[query.Translator] = Seq(
   query.MarginStripper,
   query.CallerCommenter,
   new query.Translator {
