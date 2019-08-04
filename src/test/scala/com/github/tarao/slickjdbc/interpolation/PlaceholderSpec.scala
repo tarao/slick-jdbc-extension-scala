@@ -294,7 +294,7 @@ class PlaceholderSpec extends UnitSpec {
         val Right(nel5) = refineV[NonEmpty](Seq(
           (1, "foo"),
           (2, "bar"),
-          (3, "baz"),
+          (3, "baz")
         ))
 
         val p2 = toPlaceholder(nel4)
@@ -402,7 +402,7 @@ class PlaceholderSpec extends UnitSpec {
         val Right(nel5) = refineV[NonEmpty](Seq(
           (1, "foo"),
           (2, "bar"),
-          (3, "baz"),
+          (3, "baz")
         ))
 
         val p1 = toPlaceholder(nel4)

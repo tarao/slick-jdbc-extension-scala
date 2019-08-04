@@ -216,7 +216,7 @@ class InterpolationSpec extends UnitSpec
 
       import CompoundParameter._
 
-      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).toOption
+      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).right.toOption
 
       assertTypeError("""
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
@@ -232,7 +232,7 @@ class InterpolationSpec extends UnitSpec
       import eu.timepit.refined.collection.NonEmpty
       import eu.timepit.refined.refineV
 
-      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).toOption
+      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).right.toOption
 
       assertTypeError("""
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
@@ -727,7 +727,7 @@ class InterpolationSpec extends UnitSpec
 
       import CompoundParameter._
 
-      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).toOption
+      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).right.toOption
 
       assertTypeError("""
         sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"

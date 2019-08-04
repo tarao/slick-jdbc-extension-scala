@@ -12,13 +12,13 @@ import slick.jdbc.{SetParameter => SP, PositionedParameters}
 trait ListParameter {
   @inline implicit def createSetNonEmptyList[A, L[X] <: Traversable[X], F[_, _]](implicit
     c: SP[A],
-    rt: RefType[F],
+    rt: RefType[F]
   ): SP[F[L[A], NonEmpty]] =
     new SetNonEmptyList[A, L, F, F[L[A], NonEmpty]](c, rt)
 
   @inline implicit def nonEmptyListToPlaceholder[A, L[X] <: Traversable[X], F[_, _]](implicit
     p: ToPlaceholder[A],
-    rt: RefType[F],
+    rt: RefType[F]
   ): ToPlaceholder[F[L[A], NonEmpty]] =
     new ToPlaceholder.FromNonEmptyList[A, L, F, F[L[A], NonEmpty]](p, rt)
 }
@@ -27,12 +27,12 @@ object ListParameter extends ListParameter
 trait ProductParameter {
   @inline implicit def createSetProduct[T](implicit
     check1: T <:< Product,
-    check2: IsNotTuple[T],
+    check2: IsNotTuple[T]
   ): SP[T] = new SetProduct[T]
 
   @inline implicit def productToPlaceholder[T](implicit
     check1: T <:< Product,
-    check2: IsNotTuple[T],
+    check2: IsNotTuple[T]
   ): ToPlaceholder[T] = new ToPlaceholder.FromProduct[T]
 }
 object ProductParameter extends ProductParameter
@@ -72,7 +72,7 @@ sealed trait ValidProduct[-T]
 object ValidProduct {
   implicit def valid1[T](implicit
     c: SP[T],
-    product: T <:< Product,
+    product: T <:< Product
   ): ValidProduct[T] = new ValidProduct[T] {}
 
   implicit def valid2[T](implicit check: IsNotProduct[T]): ValidProduct[T] =
@@ -85,7 +85,7 @@ sealed trait ValidRefinedNonEmpty[-T]
 object ValidRefinedNonEmpty {
   implicit def valid1[A, L[X] <: Traversable[X], F[_, _]](implicit
     c: SP[F[L[A], NonEmpty]],
-    rt: RefType[F],
+    rt: RefType[F]
   ): ValidRefinedNonEmpty[F[L[A], NonEmpty]] =
     new ValidRefinedNonEmpty[F[L[A], NonEmpty]] {}
 
