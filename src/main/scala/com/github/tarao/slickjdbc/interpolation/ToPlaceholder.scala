@@ -2,14 +2,23 @@ package com.github.tarao
 package slickjdbc
 package interpolation
 
-import util.NonEmpty
+import eu.timepit.refined.api.RefType
+import eu.timepit.refined.collection.NonEmpty
+import scala.language.higherKinds
 
 trait ToPlaceholder[-T] {
   def apply(value: T): Placeholder
+  def open: String = ""
+  def close: String = ""
 }
 object ToPlaceholder {
+  trait Compound[-T] extends ToPlaceholder[T] {
+    override def open: String = "("
+    override def close: String = ")"
+  }
+
   class FromProduct[-T](implicit product: T <:< Product)
-      extends ToPlaceholder[T] {
+      extends Compound[T] {
     def apply(value: T): Placeholder = {
       def rec(v: Any): Placeholder = v match {
         case s: Tuple1[_] =>
@@ -26,14 +35,16 @@ object ToPlaceholder {
     }
   }
 
-  class FromList[S, -T <: NonEmpty[S]](p: ToPlaceholder[S])
-      extends ToPlaceholder[T] {
+  class FromNonEmptyList[A, L[X] <: Traversable[X], F[_, _], -T <: F[L[A], NonEmpty]](
+    p: ToPlaceholder[A],
+    rt: RefType[F]
+  ) extends Compound[T] {
     def apply(value: T): Placeholder =
-      Placeholder.Nested(value.map(p.apply _).toSeq: _*)
+      Placeholder.Nested(rt.unwrap(value).map(p.apply _).toSeq: _*)
   }
 
   class FromTuple[-T <: Product](children: ToPlaceholder[_]*)
-      extends ToPlaceholder[T] {
+      extends Compound[T] {
     def apply(value: T): Placeholder = Placeholder.Nested(
       children.iterator.zip(value.productIterator).map { pair =>
         pair._1.asInstanceOf[ToPlaceholder[Any]].apply(pair._2)
