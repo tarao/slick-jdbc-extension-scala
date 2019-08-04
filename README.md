@@ -27,7 +27,7 @@ Add dependency in your `build.sbt` as the following.
 ```
 
 The library is available on [Maven Central][maven].  Currently,
-supported Scala versions are 2.11 and 2.12.
+supported Scala versions are 2.11, 2.12, and 2.13.
 
 ## <a name="overview"></a> Overview
 
@@ -465,7 +465,7 @@ defined before for `case class Entry(id: Long, url: String)` but the
 [travis-img]: https://img.shields.io/travis/tarao/slick-jdbc-extension-scala.svg?branch=master
 [coverage]: https://coveralls.io/github/tarao/slick-jdbc-extension-scala?branch=master
 [coverage-img]: https://coveralls.io/repos/tarao/slick-jdbc-extension-scala/badge.svg?branch=master&service=github
-[maven]: https://maven-badges.herokuapp.com/maven-central/com.github.tarao/slick-jdbc-extension_2.12
-[maven-img]: https://maven-badges.herokuapp.com/maven-central/com.github.tarao/slick-jdbc-extension_2.12/badge.svg
-[javadoc]: http://javadoc-badge.appspot.com/com.github.tarao/slick-jdbc-extension_2.12
-[javadoc-img]: http://javadoc-badge.appspot.com/com.github.tarao/slick-jdbc-extension_2.12.svg?label=scaladoc
+[maven]: https://maven-badges.herokuapp.com/maven-central/com.github.tarao/slick-jdbc-extension_2.13
+[maven-img]: https://maven-badges.herokuapp.com/maven-central/com.github.tarao/slick-jdbc-extension_2.13/badge.svg
+[javadoc]: http://javadoc-badge.appspot.com/com.github.tarao/slick-jdbc-extension_2.13
+[javadoc-img]: http://javadoc-badge.appspot.com/com.github.tarao/slick-jdbc-extension_2.13.svg?label=scaladoc
