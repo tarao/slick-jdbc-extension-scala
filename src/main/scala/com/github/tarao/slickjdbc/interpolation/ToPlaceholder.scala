@@ -35,7 +35,7 @@ object ToPlaceholder {
     }
   }
 
-  class FromNonEmptyList[A, L[X] <: Traversable[X], F[_, _], -T <: F[L[A], NonEmpty]](
+  class FromNonEmptyList[A, L[X] <: Iterable[X], F[_, _], -T <: F[L[A], NonEmpty]](
     p: ToPlaceholder[A],
     rt: RefType[F]
   ) extends Compound[T] {

@@ -8,7 +8,7 @@ trait TraitSingletonBehavior { self: UnitSpec =>
 
   def signatures[T](clazz: Class[T]): Set[String] =
     clazz.getDeclaredMethods.map { x =>
-      x.getReturnType + " " + x.getName +
+      x.getReturnType.toString + " " + x.getName +
         "(" + x.getParameterTypes.mkString(", ") + ")"
     }.toSet
 
@@ -18,7 +18,7 @@ trait TraitSingletonBehavior { self: UnitSpec =>
     the trait.  This ensures that importing the methods by `with
     TheTrait` and by `import TheSingleton._` have the the same effect.
     */
-  def exportingTheTraitMethods[T : Manifest](singleton: Any) {
+  def exportingTheTraitMethods[T : Manifest](singleton: Any) = {
     singleton shouldBe a [T]
     val parent = implicitly[Manifest[T]].runtimeClass.asInstanceOf[Class[T]]
     signatures(singleton.getClass) subsetOf (signatures(parent)) shouldBe true

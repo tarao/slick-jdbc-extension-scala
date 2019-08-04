@@ -14,26 +14,33 @@ case class Triple[S, T, U](left: S, middle: T, right: U)
 
 class InterpolationSpec extends UnitSpec
     with TraitSingletonBehavior {
+  implicit class EitherOps[A, B](e: Either[A, B]) { // Scala 2.11 compatibility
+    def toOption: Option[B] = e match {
+      case Right(x) => Some(x)
+      case Left(_)  => None
+    }
+  }
+
   def canonicalQuery(query: String) =
     query.replaceAll("[\r\n\t ]+", " ").trim
 
-  def theExactQuery(sql: => SQLActionBuilder)(query: String) {
+  def theExactQuery(sql: => SQLActionBuilder)(query: String) = {
     val result = sql
     result.queryParts.mkString should equal (query)
   }
 
-  def anIdenticalQuery(sql: => SQLActionBuilder)(query: String) {
+  def anIdenticalQuery(sql: => SQLActionBuilder)(query: String) = {
     canonicalQuery(sql.queryParts.mkString) should equal (canonicalQuery(query))
   }
 
   def theExactStatement(sql: => SqlAction[Int, NoStream, Effect])
-    (statement: String) {
+    (statement: String) = {
     val result = sql
     result.statements.mkString should equal (statement)
   }
 
   def anIdenticalStatement(sql: => SqlAction[Int, NoStream, Effect])
-    (statement: String) {
+    (statement: String) = {
     val expected = canonicalQuery(statement)
     canonicalQuery(sql.statements.mkString) should equal(expected)
   }
@@ -51,7 +58,7 @@ class InterpolationSpec extends UnitSpec
     }
 
     import SQLInterpolation._
-    implicit val translators: Traversable[query.Translator] = Seq.empty
+    implicit val translators: Iterable[query.Translator] = Seq.empty
 
     it("should return an action builder with a specified string") {
       it should behave like theExactQuery{ sql"test" }("test")
@@ -172,7 +179,7 @@ class InterpolationSpec extends UnitSpec
 
       import CompoundParameter._
 
-      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).right.toOption
+      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).toOption
 
       assertTypeError("""
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
@@ -188,7 +195,7 @@ class InterpolationSpec extends UnitSpec
       import eu.timepit.refined.collection.NonEmpty
       import eu.timepit.refined.refineV
 
-      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).right.toOption
+      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).toOption
 
       assertTypeError("""
         sql"SELECT * FROM entry WHERE entry_id IN ($entryIds)"
@@ -386,7 +393,7 @@ class InterpolationSpec extends UnitSpec
       import slick.jdbc.{SetParameter => SP, PositionedParameters}
       class Foo { override def toString = "foo" }
       implicit object SetFoo extends SP[Foo] {
-        def apply(v: Foo, pp: PositionedParameters) {
+        def apply(v: Foo, pp: PositionedParameters) = {
           pp.setString(v.toString)
         }
       }
@@ -407,7 +414,7 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should provide a custom translation") {
-      implicit val translators: Traversable[query.Translator] = Seq(
+      implicit val translators: Iterable[query.Translator] = Seq(
         new query.Translator {
           def apply(q: String, context: query.Context) = q + " translated"
         }
@@ -416,7 +423,7 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should provide a custom ordered translation") {
-      implicit val translators: Traversable[query.Translator] = Seq(
+      implicit val translators: Iterable[query.Translator] = Seq(
         new query.Translator {
           def apply(q: String, context: query.Context) = q + " translated"
         },
@@ -434,7 +441,7 @@ class InterpolationSpec extends UnitSpec
     }
 
     import SQLInterpolation._
-    implicit val translators: Traversable[query.Translator] = Seq.empty
+    implicit val translators: Iterable[query.Translator] = Seq.empty
 
     it("should return an action with a specified string") {
       it should behave like theExactStatement{ sqlu"test" }("test")
@@ -556,7 +563,7 @@ class InterpolationSpec extends UnitSpec
 
       import CompoundParameter._
 
-      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).right.toOption
+      val entryIds = refineV[NonEmpty](Seq(1, 2, 3, 4)).toOption
 
       assertTypeError("""
         sqlu"UPDATE entry SET flag = 1 WHERE entry_id IN ($entryIds)"
@@ -856,7 +863,7 @@ class InterpolationSpec extends UnitSpec
       import slick.jdbc.{SetParameter => SP, PositionedParameters}
       class Foo { override def toString = "foo" }
       implicit object SetFoo extends SP[Foo] {
-        def apply(v: Foo, pp: PositionedParameters) {
+        def apply(v: Foo, pp: PositionedParameters) = {
           pp.setString(v.toString)
         }
       }
@@ -877,7 +884,7 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should provide a custom translation") {
-      implicit val translators: Traversable[query.Translator] = Seq(
+      implicit val translators: Iterable[query.Translator] = Seq(
         new query.Translator {
           def apply(q: String, context: query.Context) = q + " translated"
         }
@@ -886,7 +893,7 @@ class InterpolationSpec extends UnitSpec
     }
 
     it("should provide a custom ordered translation") {
-      implicit val translators: Traversable[query.Translator] = Seq(
+      implicit val translators: Iterable[query.Translator] = Seq(
         new query.Translator {
           def apply(q: String, context: query.Context) = q + " translated"
         },

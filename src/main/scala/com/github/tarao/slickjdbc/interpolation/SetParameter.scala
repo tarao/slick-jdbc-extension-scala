@@ -10,13 +10,13 @@ import scala.language.implicitConversions
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
 
 trait ListParameter {
-  @inline implicit def createSetNonEmptyList[A, L[X] <: Traversable[X], F[_, _]](implicit
+  @inline implicit def createSetNonEmptyList[A, L[X] <: Iterable[X], F[_, _]](implicit
     c: SP[A],
     rt: RefType[F]
   ): SP[F[L[A], NonEmpty]] =
     new SetNonEmptyList[A, L, F, F[L[A], NonEmpty]](c, rt)
 
-  @inline implicit def nonEmptyListToPlaceholder[A, L[X] <: Traversable[X], F[_, _]](implicit
+  @inline implicit def nonEmptyListToPlaceholder[A, L[X] <: Iterable[X], F[_, _]](implicit
     p: ToPlaceholder[A],
     rt: RefType[F]
   ): ToPlaceholder[F[L[A], NonEmpty]] =
@@ -41,7 +41,7 @@ trait CompoundParameter extends ListParameter with ProductParameter
 object CompoundParameter extends CompoundParameter
 
 /** SetParameter for non-empty list types. */
-class SetNonEmptyList[A, L[X] <: Traversable[X], F[_, _], -T <: F[L[A], NonEmpty]](val c: SP[A], rt: RefType[F]) extends SP[T] {
+class SetNonEmptyList[A, L[X] <: Iterable[X], F[_, _], -T <: F[L[A], NonEmpty]](val c: SP[A], rt: RefType[F]) extends SP[T] {
   def apply(param: T, pp: PositionedParameters): Unit = {
     rt.unwrap(param).foreach(item => c.asInstanceOf[SP[Any]](item, pp))
   }
@@ -83,7 +83,7 @@ object ValidProduct {
   "[NOTE] Use interpolation.CompoundParameter trait to enable passing a non-empty list.")
 sealed trait ValidRefinedNonEmpty[-T]
 object ValidRefinedNonEmpty {
-  implicit def valid1[A, L[X] <: Traversable[X], F[_, _]](implicit
+  implicit def valid1[A, L[X] <: Iterable[X], F[_, _]](implicit
     c: SP[F[L[A], NonEmpty]],
     rt: RefType[F]
   ): ValidRefinedNonEmpty[F[L[A], NonEmpty]] =
@@ -155,8 +155,8 @@ object IsNotEither {
 sealed trait IsNotList[-T]
 object IsNotList {
   implicit def valid[T]: IsNotList[T] = new IsNotList[T] {}
-  implicit def ambig1[S]: IsNotList[Traversable[S]] = sys.error("unexpected")
-  implicit def ambig2[S]: IsNotList[Traversable[S]] = sys.error("unexpected")
+  implicit def ambig1[S]: IsNotList[Iterable[S]] = sys.error("unexpected")
+  implicit def ambig2[S]: IsNotList[Iterable[S]] = sys.error("unexpected")
 }
 
 sealed trait IsNotRefinedNonEmpty[-T]
@@ -164,10 +164,10 @@ object IsNotRefinedNonEmpty {
   implicit def valid[T]: IsNotRefinedNonEmpty[T] =
     new IsNotRefinedNonEmpty[T] {}
 
-  implicit def ambig1[A, L[X] <: Traversable[X], F[_, _]](implicit
+  implicit def ambig1[A, L[X] <: Iterable[X], F[_, _]](implicit
     rt: RefType[F]
   ): IsNotRefinedNonEmpty[F[L[A], NonEmpty]] = sys.error("unexpected")
-  implicit def ambig2[A, L[X] <: Traversable[X], F[_, _]](implicit
+  implicit def ambig2[A, L[X] <: Iterable[X], F[_, _]](implicit
     rt: RefType[F]
   ): IsNotRefinedNonEmpty[F[L[A], NonEmpty]] = sys.error("unexpected")
 }

@@ -17,16 +17,16 @@ import java.io.{
 class TypeBinderSpec extends UnitSpec with MockFactory {
   def column[T](rs: ResultSet, index: Int, expected: T)(implicit
     binder: TypeBinder[T]
-  ) { binder.apply(rs, index) should be (expected) }
+  ) = { binder.apply(rs, index) should be (expected) }
   def column[T](rs: ResultSet, field: String, expected: T)(implicit
     binder: TypeBinder[T]
-  ) { binder.apply(rs, field) should be (expected) }
+  ) = { binder.apply(rs, field) should be (expected) }
   def throwingFromColumn[T](rs: ResultSet, index: Int)(implicit
     binder: TypeBinder[T]
-  ) { a [NoSuchElementException] should be thrownBy binder.apply(rs, index) }
+  ) = { a [NoSuchElementException] should be thrownBy binder.apply(rs, index) }
   def throwingFromColumn[T](rs: ResultSet, field: String)(implicit
     binder: TypeBinder[T]
-  ) { a [NoSuchElementException] should be thrownBy binder.apply(rs, field) }
+  ) = { a [NoSuchElementException] should be thrownBy binder.apply(rs, field) }
 
   describe("TypeBinder[String]") {
     it("should be able to get a String value") {
