@@ -16,7 +16,7 @@ lazy val slickjdbcextension = (project in file(".")).
       "eu.timepit" %% "refined"  % "0.9.9",
       "org.scalatest" %% "scalatest" % "3.0.8" % "test",
       "org.scalamock" %% "scalamock" % "4.3.0" % "test",
-      "com.h2database" % "h2" % "1.4.199" % "test"
+      "com.h2database" % "h2" % "1.4.200" % "test"
     ),
 
     // Compilation
