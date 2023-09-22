@@ -26,11 +26,11 @@ class InterpolationSpec extends UnitSpec
 
   def theExactQuery(sql: => SQLActionBuilder)(query: String) = {
     val result = sql
-    result.queryParts.mkString should equal (query)
+    result.strings.mkString should equal (query)
   }
 
   def anIdenticalQuery(sql: => SQLActionBuilder)(query: String) = {
-    canonicalQuery(sql.queryParts.mkString) should equal (canonicalQuery(query))
+    canonicalQuery(sql.strings.mkString) should equal (canonicalQuery(query))
   }
 
   def theExactStatement(sql: => SqlAction[Int, NoStream, Effect])

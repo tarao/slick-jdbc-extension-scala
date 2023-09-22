@@ -43,7 +43,7 @@ object Translator extends Context {
   def translateBuilder(builder: SQLActionBuilder)(implicit
     translators: Iterable[Translator]
   ): SQLActionBuilder = {
-    val query = builder.queryParts.iterator.map(String.valueOf).mkString
-    SQLActionBuilder(Seq(translate(query)(translators)), builder.unitPConv)
+    val query = builder.strings.mkString
+    SQLActionBuilder(Seq(translate(query)(translators)), builder.params)
   }
 }
