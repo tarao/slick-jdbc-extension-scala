@@ -45,7 +45,7 @@ class GetResultSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: String)).expects("entry_id").returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: String)).expects("url").returning(url)
 
@@ -68,7 +68,7 @@ class GetResultSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: String)).expects("entry_id").returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: String)).expects("url").returning(url)
 
@@ -88,7 +88,7 @@ class GetResultSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: String)).expects("entry_id").returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: String)).expects("url").returning(url)
 
@@ -106,7 +106,7 @@ class GetResultSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: Int)).expects(2).returning(url)
 
@@ -129,7 +129,7 @@ class GetResultSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: Int)).expects(3).returning(url)
 
@@ -149,7 +149,7 @@ class GetResultSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(2).returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: Int)).expects(3).returning(url)
 
@@ -173,7 +173,7 @@ class GetResultTraitSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: String)).expects("entry_id").returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: String)).expects("url").returning(url)
 
@@ -196,7 +196,7 @@ class GetResultTraitSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: String)).expects("entry_id").returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: String)).expects("url").returning(url)
 
@@ -216,7 +216,7 @@ class GetResultTraitSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: String)).expects("entry_id").returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: String)).expects("url").returning(url)
 
@@ -234,7 +234,7 @@ class GetResultTraitSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: Int)).expects(2).returning(url)
 
@@ -257,7 +257,7 @@ class GetResultTraitSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: Int)).expects(3).returning(url)
 
@@ -277,7 +277,7 @@ class GetResultTraitSpec extends UnitSpec
 
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(2).returning(
-        new java.lang.Long(id)
+        java.lang.Long.valueOf(id)
       )
       (rs.getString(_: Int)).expects(3).returning(url)
 

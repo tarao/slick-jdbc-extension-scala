@@ -51,7 +51,7 @@ trait TestDB extends BeforeAndAfterAll with BeforeAndAfterEach {
 
   lazy val db = new DBRunner(Database.forConfig("", config))
 
-  override def beforeAll = {
+  override def beforeAll() = {
     import slick.driver.H2Driver.api._
 
     db.run { sqlu"""
@@ -67,11 +67,11 @@ trait TestDB extends BeforeAndAfterAll with BeforeAndAfterEach {
       )
     """ }
 
-    super.beforeAll
+    super.beforeAll()
   }
 
-  override def afterAll = {
+  override def afterAll() = {
     db.close
-    super.afterAll
+    super.afterAll()
   }
 }
