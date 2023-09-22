@@ -28,7 +28,7 @@ object CallerCommenter extends Translator {
 case class SQLComment(comment: Any) {
   import scala.util.matching.Regex
 
-  def escaped = comment.toString.replaceAllLiterally("*/", """*\\/""")
+  def escaped = comment.toString.replace("*/", """*\\/""")
 
   def embedTo(query: String) =
     query.replaceFirst(" ", Regex.quoteReplacement(s" /* ${escaped} */ "))

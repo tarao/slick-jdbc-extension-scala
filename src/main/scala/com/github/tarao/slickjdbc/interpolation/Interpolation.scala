@@ -8,7 +8,7 @@ import slick.sql.SqlAction
 import slick.dbio.{NoStream, Effect}
 
 trait SQLInterpolation {
-  implicit def interpolation(s: StringContext) = SQLInterpolationImpl(s)
+  implicit def interpolation(s: StringContext): SQLInterpolationImpl = SQLInterpolationImpl(s)
 }
 object SQLInterpolation extends SQLInterpolation
 
