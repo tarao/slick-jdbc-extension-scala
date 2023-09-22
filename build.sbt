@@ -27,7 +27,7 @@ lazy val slickjdbcextension = (project in file(".")).
     ),
 
     // Documentation
-    scalacOptions in (Compile, doc) ++= Nil :::
+    Compile / doc / scalacOptions ++= Nil :::
       "-groups" ::
       "-sourcepath" ::
       baseDirectory.value.getAbsolutePath ::
@@ -44,7 +44,7 @@ lazy val slickjdbcextension = (project in file(".")).
       else
         Some("releases"  at nexus + "service/local/staging/deploy/maven2")
     },
-    publishArtifact in Test := false,
+    Test / publishArtifact := false,
     pomIncludeRepository := { _ => false },
     pomExtra := (
       <url>https://github.com/tarao/slick-jdbc-extension-scala</url>
