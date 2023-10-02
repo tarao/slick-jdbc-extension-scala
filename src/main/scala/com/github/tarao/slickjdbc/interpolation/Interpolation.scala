@@ -3,12 +3,20 @@ package slickjdbc
 package interpolation
 
 import scala.language.implicitConversions
-import slick.jdbc.SQLActionBuilder
+import slick.jdbc.{SQLActionBuilder, SetParameter, TypedParameter}
 import slick.sql.SqlAction
-import slick.dbio.{NoStream, Effect}
+import slick.dbio.{Effect, NoStream}
 
 trait SQLInterpolation {
   implicit def interpolation(s: StringContext): SQLInterpolationImpl = SQLInterpolationImpl(s)
+
+  implicit def literalTypeCanBeTypedParameter[A <: Literal](a: A): TypedParameter[A] = {
+    val sp = slick.jdbc.SetParameter.SetString.contramap[A](_.toString())
+    slick.jdbc.TypedParameter.typedParameter(a)(sp)
+  }
+  implicit def setParameterCanBeTypedParameter[A : SetParameter](a: A): TypedParameter[A] = {
+    slick.jdbc.TypedParameter.typedParameter(a)
+  }
 }
 object SQLInterpolation extends SQLInterpolation
 
