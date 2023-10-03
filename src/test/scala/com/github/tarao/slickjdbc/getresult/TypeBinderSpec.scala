@@ -31,8 +31,8 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
   describe("TypeBinder[String]") {
     it("should be able to get a String value") {
       val rs = mock[ResultSet]
-      (rs.getString(_: Int)).expects(1).twice.returning("foo bar")
-      (rs.getString(_: String)).expects("column1").twice.returning("foo bar")
+      (rs.getString(_: Int)).expects(1).twice().returning("foo bar")
+      (rs.getString(_: String)).expects("column1").twice().returning("foo bar")
 
       it should behave like column(rs, 1, Option("foo bar"))
       it should behave like column(rs, "column1", Option("foo bar"))
@@ -52,8 +52,8 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
 
     it("should not be able to get a String from null") {
       val rs = mock[ResultSet]
-      (rs.getString(_: Int)).expects(0).twice.returning(null)
-      (rs.getString(_: String)).expects("null").twice.returning(null)
+      (rs.getString(_: Int)).expects(0).twice().returning(null)
+      (rs.getString(_: String)).expects("null").twice().returning(null)
 
       it should behave like column[Option[String]](rs, 0, None)
       it should behave like column[Option[String]](rs, "null", None)
@@ -126,16 +126,16 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
     it("should be able to get a Boolean value") {
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).repeat(2).returning(
-        new java.lang.Boolean(true)
+        java.lang.Boolean.TRUE
       )
       (rs.getObject(_: String)).expects("column1").repeat(2).returning(
-        new java.lang.Boolean(true)
+        java.lang.Boolean.TRUE
       )
       (rs.getObject(_: Int)).expects(2).repeat(2).returning(
-        new java.lang.Boolean(false)
+        java.lang.Boolean.FALSE
       )
       (rs.getObject(_: String)).expects("column2").repeat(2).returning(
-        new java.lang.Boolean(false)
+        java.lang.Boolean.FALSE
       )
       (rs.getObject(_: Int)).expects(3).repeat(2).returning(
         java.math.BigDecimal.ONE
@@ -150,28 +150,28 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
         java.math.BigDecimal.ZERO
       )
       (rs.getObject(_: Int)).expects(5).repeat(2).returning(
-        new java.lang.Integer(1)
+        java.lang.Integer.valueOf(1)
       )
       (rs.getObject(_: String)).expects("column5").repeat(2).returning(
-        new java.lang.Integer(1)
+        java.lang.Integer.valueOf(1)
       )
       (rs.getObject(_: Int)).expects(6).repeat(2).returning(
-        new java.lang.Integer(0)
+        java.lang.Integer.valueOf(0)
       )
       (rs.getObject(_: String)).expects("column6").repeat(2).returning(
-        new java.lang.Integer(0)
+        java.lang.Integer.valueOf(0)
       )
       (rs.getObject(_: Int)).expects(7).repeat(2).returning(
-        new java.lang.Float(1.0)
+        java.lang.Float.valueOf(1.0f)
       )
       (rs.getObject(_: String)).expects("column7").repeat(2).returning(
-        new java.lang.Float(1.0)
+        java.lang.Float.valueOf(1.0f)
       )
       (rs.getObject(_: Int)).expects(8).repeat(2).returning(
-        new java.lang.Float(0.0)
+        java.lang.Float.valueOf(0.0f)
       )
       (rs.getObject(_: String)).expects("column8").repeat(2).returning(
-        new java.lang.Float(0.0)
+        java.lang.Float.valueOf(0.0f)
       )
       (rs.getObject(_: Int)).expects(9).repeat(2).returning(
         new java.lang.String("1")
@@ -241,28 +241,28 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
     it("should be able to get a Byte value") {
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).repeat(2).returning(
-        new java.lang.Byte(12.toByte)
+        java.lang.Byte.valueOf(12.toByte)
       )
       (rs.getObject(_: String)).expects("column1").repeat(2).returning(
-        new java.lang.Byte(12.toByte)
+        java.lang.Byte.valueOf(12.toByte)
       )
       (rs.getObject(_: Int)).expects(2).repeat(2).returning(
-        new java.lang.Byte(224.toByte)
+        java.lang.Byte.valueOf(224.toByte)
       )
       (rs.getObject(_: String)).expects("column2").repeat(2).returning(
-        new java.lang.Byte(224.toByte)
+        java.lang.Byte.valueOf(224.toByte)
       )
       (rs.getObject(_: Int)).expects(3).repeat(2).returning(
-        new java.lang.Integer(1281)
+        java.lang.Integer.valueOf(1281)
       )
       (rs.getObject(_: String)).expects("column3").repeat(2).returning(
-        new java.lang.Integer(1281)
+        java.lang.Integer.valueOf(1281)
       )
       (rs.getObject(_: Int)).expects(4).repeat(2).returning(
-        new java.lang.Integer(-1281)
+        java.lang.Integer.valueOf(-1281)
       )
       (rs.getObject(_: String)).expects("column4").repeat(2).returning(
-        new java.lang.Integer(-1281)
+        java.lang.Integer.valueOf(-1281)
       )
       (rs.getObject(_: Int)).expects(5).repeat(2).returning("12")
       (rs.getObject(_: String)).expects("column5").repeat(2).returning("12")
@@ -354,28 +354,28 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
     it("should be able to get a Short value") {
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).repeat(2).returning(
-        new java.lang.Short(12.toShort)
+        java.lang.Short.valueOf(12.toShort)
       )
       (rs.getObject(_: String)).expects("column1").repeat(2).returning(
-        new java.lang.Short(12.toShort)
+        java.lang.Short.valueOf(12.toShort)
       )
       (rs.getObject(_: Int)).expects(2).repeat(2).returning(
-        new java.lang.Short(38000.toShort)
+        java.lang.Short.valueOf(38000.toShort)
       )
       (rs.getObject(_: String)).expects("column2").repeat(2).returning(
-        new java.lang.Short(38000.toShort)
+        java.lang.Short.valueOf(38000.toShort)
       )
       (rs.getObject(_: Int)).expects(3).repeat(2).returning(
-        new java.lang.Integer(129780)
+        java.lang.Integer.valueOf(129780)
       )
       (rs.getObject(_: String)).expects("column3").repeat(2).returning(
-        new java.lang.Integer(129780)
+        java.lang.Integer.valueOf(129780)
       )
       (rs.getObject(_: Int)).expects(4).repeat(2).returning(
-        new java.lang.Integer(-129781)
+        java.lang.Integer.valueOf(-129781)
       )
       (rs.getObject(_: String)).expects("column4").repeat(2).returning(
-        new java.lang.Integer(-129781)
+        java.lang.Integer.valueOf(-129781)
       )
       (rs.getObject(_: Int)).expects(5).repeat(2).returning("12")
       (rs.getObject(_: String)).expects("column5").repeat(2).returning("12")
@@ -467,16 +467,16 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
     it("should be able to get a Int value") {
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).repeat(2).returning(
-        new java.lang.Integer(12)
+        java.lang.Integer.valueOf(12)
       )
       (rs.getObject(_: String)).expects("column1").repeat(2).returning(
-        new java.lang.Integer(12)
+        java.lang.Integer.valueOf(12)
       )
       (rs.getObject(_: Int)).expects(2).repeat(2).returning(
-        new java.lang.Integer(3000000000L.toInt)
+        java.lang.Integer.valueOf(3000000000L.toInt)
       )
       (rs.getObject(_: String)).expects("column2").repeat(2).returning(
-        new java.lang.Integer(3000000000L.toInt)
+        java.lang.Integer.valueOf(3000000000L.toInt)
       )
       (rs.getObject(_: Int)).expects(3).repeat(2).returning("12")
       (rs.getObject(_: String)).expects("column3").repeat(2).returning("12")
@@ -560,16 +560,16 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
     it("should be able to get a Long value") {
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).repeat(2).returning(
-        new java.lang.Long(12)
+        java.lang.Long.valueOf(12)
       )
       (rs.getObject(_: String)).expects("column1").repeat(2).returning(
-        new java.lang.Long(12)
+        java.lang.Long.valueOf(12)
       )
       (rs.getObject(_: Int)).expects(2).repeat(2).returning(
-        new java.lang.Long(6000000000L)
+        java.lang.Long.valueOf(6000000000L)
       )
       (rs.getObject(_: String)).expects("column2").repeat(2).returning(
-        new java.lang.Long(6000000000L)
+        java.lang.Long.valueOf(6000000000L)
       )
       (rs.getObject(_: Int)).expects(3).repeat(2).returning(
         new java.math.BigInteger("1"+"0"*19)
@@ -663,10 +663,10 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
     it("should be able to get a Float value") {
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).repeat(2).returning(
-        new java.lang.Float(1.2f)
+        java.lang.Float.valueOf(1.2f)
       )
       (rs.getObject(_: String)).expects("column1").repeat(2).returning(
-        new java.lang.Float(1.2f)
+        java.lang.Float.valueOf(1.2f)
       )
       (rs.getObject(_: Int)).expects(2).repeat(2).returning("1.2")
       (rs.getObject(_: String)).expects("column2").repeat(2).returning("1.2")
@@ -756,10 +756,10 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
     it("should be able to get a Double value") {
       val rs = mock[ResultSet]
       (rs.getObject(_: Int)).expects(1).repeat(2).returning(
-        new java.lang.Double(1.2)
+        java.lang.Double.valueOf(1.2)
       )
       (rs.getObject(_: String)).expects("column1").repeat(2).returning(
-        new java.lang.Double(1.2)
+        java.lang.Double.valueOf(1.2)
       )
       (rs.getObject(_: Int)).expects(2).repeat(2).returning("1.2")
       (rs.getObject(_: String)).expects("column2").repeat(2).returning("1.2")
@@ -1078,7 +1078,7 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
       Iterator.continually{reader.read}.takeWhile(_ >= 0).toSeq
     }
   }
-  implicit def reader2Seq(r: Reader) = new Reader2Seq(r)
+  implicit def reader2Seq(r: Reader): Reader2Seq = new Reader2Seq(r)
 
   class InputStream2Seq(val is: InputStream) {
     def toSeq = {
@@ -1086,7 +1086,7 @@ class TypeBinderSpec extends UnitSpec with MockFactory {
       Iterator.continually{reader.read}.takeWhile(_ >= 0).toSeq
     }
   }
-  implicit def inputStream2Seq(is: InputStream) =
+  implicit def inputStream2Seq(is: InputStream): Reader2Seq =
     new Reader2Seq(new InputStreamReader(is))
 
   describe("TypeBinder[java.io.InputStream]") {

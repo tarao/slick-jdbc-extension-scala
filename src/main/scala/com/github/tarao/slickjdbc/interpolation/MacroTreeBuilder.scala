@@ -8,7 +8,6 @@ import scala.reflect.macros.blackbox.Context
 private[interpolation] class MacroTreeBuilder(val c: Context) {
   import c.universe._
   import scala.collection.mutable.ListBuffer
-  import slick.jdbc.SQLActionBuilder
   import slick.sql.SqlAction
   import slick.dbio.{NoStream, Effect}
 
@@ -45,8 +44,6 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     tq"""$interpolation.${TypeName("ToPlaceholder")}"""
   private def toPlaceholder(target: Type, base: Tree = ToPlaceholder) =
     q"implicitly[$base[$target]]"
-  private val Translators =
-    tq"Iterable[$NS.query.Translator]"
 
   def invokeInterpolation(param: c.Expr[Any]*): Tree = {
     val stats = new ListBuffer[Tree]
@@ -100,12 +97,18 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
         params.append(c.Expr(q""" ${""} """))
         queryParts.append(q""" ${literal + "#"} """)
     }
+    def pushLiteralValue(expr: c.Expr[Any]) = {
+      params.append(c.Expr(q"""slick.jdbc.TypedParameter.typedParameter($expr)(new ${interpolation}.SetLiteral)"""))
+    }
+    def pushValue(expr: c.Expr[Any]) = {
+      params.append(c.Expr(q"""slick.jdbc.TypedParameter.typedParameter($expr)"""))
+    }
     def mayCompleteParen(param: c.Expr[Any], s: String)(block: => Unit) = {
       if (!s.matches("""(?s).*\(\s*""")) {
-        params.append(c.Expr(q""" ${toPlaceholder(param.actualType)}.open """))
+        pushLiteralValue(c.Expr(q""" ${toPlaceholder(param.actualType)}.open """))
         queryParts.append(q""" ${"#"} """)
         block
-        params.append(c.Expr(q""" ${toPlaceholder(param.actualType)}.close """))
+        pushLiteralValue(c.Expr(q""" ${toPlaceholder(param.actualType)}.close """))
         queryParts.append(q""" ${"#"} """)
       } else block
     }
@@ -121,7 +124,7 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
 
         mayCompleteParen(param, s) {
           // for "?, ?, ?, ..." except the last one
-          params.append(c.Expr(q"""
+          pushLiteralValue(c.Expr(q"""
             ${toPlaceholder(param.actualType)}
               .apply(${param})
               .toTopLevelString
@@ -129,11 +132,11 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
           queryParts.append(q""" ${"#"} """)
 
           // for the last "?" (inserted by ActionBasedSQLInterpolation)
-          params.append(param)
+          pushValue(param)
           queryParts.append(q""" ${""} """)
         }
       } else {
-        params.append(param)
+        pushLiteralValue(param)
         queryParts.append(q"$s")
       }
 
@@ -160,22 +163,14 @@ private[interpolation] class MacroTreeBuilder(val c: Context) {
     }
     queryParts.append(q"${rawQueryParts.last}")
 
-    // Call the original SQL interpolation of
-    // `ActionBasedSQLInterpolation`.  And translate the query string
-    // by `SQLActionTranslator`.
-    stats.append(q"""
-      $NS.query.Translator.translateBuilder(
-        new slick.jdbc.ActionBasedSQLInterpolation(
-          StringContext(..$queryParts)
-        ).sql(..$params)
-      )(implicitly[$Translators])
-    """)
+    stats.append(q"""new $interpolation.SQLActionBuilder(Seq(..$queryParts), Seq(..$params))""")
     q"{ ..$stats }"
+
   }
 
-  def sqlImpl(param: c.Expr[Any]*): c.Expr[SQLActionBuilder] =
-    c.Expr(invokeInterpolation(param: _*))
+  def sqlImpl(params: c.Expr[Any]*): c.Expr[SQLActionBuilder] =
+    c.Expr(invokeInterpolation(params: _*))
 
-  def sqluImpl(param: c.Expr[Any]*): c.Expr[SqlAction[Int, NoStream, Effect]] =
-    c.Expr(q""" ${invokeInterpolation(param: _*)}.asUpdate """)
+  def sqluImpl(params: c.Expr[Any]*): c.Expr[SqlAction[Int, NoStream, Effect]] =
+    c.Expr(q""" ${invokeInterpolation(params: _*)}.asUpdate """)
 }

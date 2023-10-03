@@ -6,14 +6,14 @@ lazy val slickjdbcextension = (project in file(".")).
     name := "slick-jdbc-extension",
     organization := "com.github.tarao",
     version := "0.1.1-SNAPSHOT",
-    scalaVersion := "2.13.0",
-    crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
+    scalaVersion := "2.13.12",
+    crossScalaVersions := Seq("2.12.18", "2.13.12"),
 
     // Depenency
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "com.typesafe.slick" %% "slick" % "3.3.3",
-      "eu.timepit" %% "refined"  % "0.9.16",
+      "com.typesafe.slick" %% "slick" % "3.5.0-M4",
+      "eu.timepit" %% "refined"  % "0.11.0",
       "org.scalatest" %% "scalatest" % "3.0.8" % "test",
       "org.scalamock" %% "scalamock" % "5.0.0" % "test",
       "com.h2database" % "h2" % "1.4.200" % "test"
@@ -27,7 +27,7 @@ lazy val slickjdbcextension = (project in file(".")).
     ),
 
     // Documentation
-    scalacOptions in (Compile, doc) ++= Nil :::
+    Compile / doc / scalacOptions ++= Nil :::
       "-groups" ::
       "-sourcepath" ::
       baseDirectory.value.getAbsolutePath ::
@@ -44,7 +44,7 @@ lazy val slickjdbcextension = (project in file(".")).
       else
         Some("releases"  at nexus + "service/local/staging/deploy/maven2")
     },
-    publishArtifact in Test := false,
+    Test / publishArtifact := false,
     pomIncludeRepository := { _ => false },
     pomExtra := (
       <url>https://github.com/tarao/slick-jdbc-extension-scala</url>

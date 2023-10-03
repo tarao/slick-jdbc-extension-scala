@@ -14,7 +14,7 @@ object Timeout {
 
 class DBRunner(val db: Database) {
   import scala.concurrent.{Future, Await}
-  import slick.driver.H2Driver.api.Database
+  import slick.jdbc.H2Profile.api.Database
   import slick.dbio.{DBIOAction, NoStream, Effect}
 
   def run[R](a: DBIOAction[R, NoStream, Nothing])(implicit
@@ -51,8 +51,8 @@ trait TestDB extends BeforeAndAfterAll with BeforeAndAfterEach {
 
   lazy val db = new DBRunner(Database.forConfig("", config))
 
-  override def beforeAll = {
-    import slick.driver.H2Driver.api._
+  override def beforeAll() = {
+    import slick.jdbc.H2Profile.api._
 
     db.run { sqlu"""
       CREATE TABLE IF NOT EXISTS entry (
@@ -67,11 +67,11 @@ trait TestDB extends BeforeAndAfterAll with BeforeAndAfterEach {
       )
     """ }
 
-    super.beforeAll
+    super.beforeAll()
   }
 
-  override def afterAll = {
+  override def afterAll() = {
     db.close
-    super.afterAll
+    super.afterAll()
   }
 }

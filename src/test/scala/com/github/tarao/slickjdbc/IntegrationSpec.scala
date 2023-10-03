@@ -9,6 +9,7 @@ import helper.{UnitSpec, TestDB, Repository}
 import interpolation.{SQLInterpolation, CompoundParameter, TableName}
 import getresult.{GetResult, AutoUnwrapOption, TypeBinder}
 import slick.jdbc.{SetParameter => SP, PositionedParameters}
+import slick.jdbc
 
 case class URL(url: String)
 case class Entry(id: Long, url: URL)
@@ -26,11 +27,11 @@ trait EntryRepository extends Repository
     }
   }
 
-  implicit val getEntryResult = getResult { Entry(
+  implicit val getEntryResult: jdbc.GetResult[Entry] = getResult { Entry(
     column("entry_id"),
     column("url")
   ) }
-  implicit val getTupleResult = getResult {
+  implicit val getTupleResult: jdbc.GetResult[(Long, String)] = getResult {
     ( column[Long]("entry_id"), column[String]("url") )
   }
   implicit def urlBinder(implicit
