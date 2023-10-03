@@ -2,7 +2,11 @@ package com.github.tarao
 package slickjdbc
 package helper
 
-import org.scalatest.{FunSpec, Matchers, OptionValues, Inside, Inspectors}
+import org.scalatest.Inside
+import org.scalatest.Inspectors
+import org.scalatest.OptionValues
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers
 
-abstract class UnitSpec extends FunSpec
-    with Matchers with OptionValues with Inside with Inspectors
+abstract class UnitSpec extends AnyFunSpec
+    with matchers.should.Matchers with OptionValues with Inside with Inspectors

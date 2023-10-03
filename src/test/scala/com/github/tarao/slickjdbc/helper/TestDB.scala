@@ -4,7 +4,8 @@ package helper
 
 import scala.language.implicitConversions
 import scala.concurrent.duration.Duration
-import org.scalatest.{FunSpec, BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.funspec.AnyFunSpec
 import slick.jdbc.H2Profile.api.Database
 
 case class Timeout(duration: Duration)
@@ -35,7 +36,7 @@ trait Repository {
 }
 
 trait TestDB extends BeforeAndAfterAll with BeforeAndAfterEach {
-  self: FunSpec =>
+  self: AnyFunSpec =>
 
   lazy val config = {
     import com.typesafe.config.{ConfigFactory, ConfigValueFactory => V}
