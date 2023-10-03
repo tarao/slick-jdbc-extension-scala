@@ -10,6 +10,7 @@ jobs:
       matrix:
         include:
           - java: 8
+          - java: 11
           - java: 17
     runs-on: ubuntu-latest
     steps:
