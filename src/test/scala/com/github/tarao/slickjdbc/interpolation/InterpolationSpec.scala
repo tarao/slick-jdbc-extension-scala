@@ -3,7 +3,7 @@ package slickjdbc
 package interpolation
 
 import helper.{UnitSpec, TraitSingletonBehavior}
-import slick.jdbc.SQLActionBuilder
+import slick.jdbc.TypedParameter
 import slick.sql.SqlAction
 import slick.dbio.{NoStream, Effect}
 
@@ -24,13 +24,15 @@ class InterpolationSpec extends UnitSpec
   def canonicalQuery(query: String) =
     query.replaceAll("[\r\n\t ]+", " ").trim
 
+  def parsedQuery(sql: SQLActionBuilder): String =
+    slick.jdbc.SQLInterpolation.parse(sql.strings, sql.params.asInstanceOf[Seq[TypedParameter[Any]]])._1
+
   def theExactQuery(sql: => SQLActionBuilder)(query: String) = {
-    val result = sql
-    result.strings.mkString should equal (query)
+    parsedQuery(sql) should equal (query)
   }
 
   def anIdenticalQuery(sql: => SQLActionBuilder)(query: String) = {
-    canonicalQuery(sql.strings.mkString) should equal (canonicalQuery(query))
+    canonicalQuery(parsedQuery(sql)) should equal (canonicalQuery(query))
   }
 
   def theExactStatement(sql: => SqlAction[Int, NoStream, Effect])
@@ -419,7 +421,7 @@ class InterpolationSpec extends UnitSpec
           def apply(q: String, context: query.Context) = q + " translated"
         }
       )
-      it should behave like theExactQuery{ sql"test" }("test translated")
+      it should behave like theExactStatement{ sqlu"test" }("test translated")
     }
 
     it("should provide a custom ordered translation") {
@@ -431,7 +433,7 @@ class InterpolationSpec extends UnitSpec
           def apply(q: String, context: query.Context) = q + " more"
         }
       )
-      it should behave like theExactQuery{ sql"test" }("test translated more")
+      it should behave like theExactStatement{ sqlu"test" }("test translated more")
     }
   }
 

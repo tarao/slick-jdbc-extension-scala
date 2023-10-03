@@ -56,6 +56,11 @@ class SetProduct[-T](implicit product: T <:< Product) extends SP[T] {
     }
 }
 
+class SetLiteral[-T] extends SP[T] {
+  def apply(lit: T, pp: PositionedParameters): Unit =
+    SP.SetString(lit.toString(), pp)
+}
+
 // $COVERAGE-OFF$
 
 @implicitNotFound(msg = "Unsupported parameter type: ${T}.\n" +
