@@ -13,4 +13,6 @@ project/boot/
 project/plugins/project/
 
 .bloop
+.bsp
 .metals
+metals.sbt
