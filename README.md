@@ -27,7 +27,7 @@ Add dependency in your `build.sbt` as the following.
 ```
 
 The library is available on [Maven Central][maven].  Currently,
-supported Scala versions are 2.11, 2.12, and 2.13.
+supported Scala versions are 2.12, and 2.13.
 
 ## <a name="overview"></a> Overview
 
