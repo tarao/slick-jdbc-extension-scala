@@ -36,6 +36,7 @@ lazy val slickjdbcextension = (project in file(".")).
 
     // Publishing
     releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    releaseCrossBuild := true,
     publishMavenStyle := true,
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
