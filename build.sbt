@@ -12,7 +12,7 @@ lazy val slickjdbcextension = (project in file(".")).
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "com.typesafe.slick" %% "slick" % "3.5.0-M4",
-      "eu.timepit" %% "refined"  % "0.11.0",
+      "eu.timepit" %% "refined"  % "0.11.1",
       "org.scalatest" %% "scalatest" % "3.2.17" % "test",
       "org.scalamock" %% "scalamock" % "5.0.0" % "test",
       "com.h2database" % "h2" % "1.4.200" % "test"
